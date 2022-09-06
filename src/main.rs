@@ -1,5 +1,5 @@
-use std::{fs::File, io::{Read, self, BufReader}};
-use bstr::{Chars, BString, io::BufReadExt};
+use std::{fs::File, io::{Read, self}};
+use bstr::{BString};
 
 /*fn read_save(filename: &str) -> io::Result<String> {
     let mut file = File::open(&filename.trim())?;
@@ -10,17 +10,15 @@ use bstr::{Chars, BString, io::BufReadExt};
 
 fn read_save(filename: &str) -> io::Result<BString> {
     let mut file = File::open(&filename.trim())?;
-    let mut reader = BufReader::new(file);
-    let mut contents = BString::from(reader);
-    //file.read_to_string( text)?;
-    Ok(lines)
-}
+    let mut buffer = Vec::new();
+    
+    // Read the whole file
+    file.read_to_end(&mut buffer)?;
 
-/*fn read_save(filename: &str) -> &BStr {
-    let path = PathBuf::from(filename);
-    let my_file = Vec::from_path_buf(path).expect("must be valid UTF-8");
-    my_file
-}*/
+    // Use a Byte String because FL saves are ANSI (Windows code page WinLatin1)
+    let contents = BString::from(buffer);
+    Ok(contents)
+}
 
 fn decrypt (buffer: BString) {
     let mut len =  4;
