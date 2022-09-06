@@ -39,7 +39,7 @@ fn decrypt (buffer: BString) {
     // Check for encrypted save.fl file header.
     if my_buf.contains_str("FLS1") {
         while len < byte_buf_len {
-            let gene_cipher: u8 = ((gene[len % 4] + len) % 256).try_into().unwrap();
+            let gene_cipher: u8 = ((gene[my_iter % 4] + my_iter) % 256).try_into().unwrap();
             
             decipher_buf.push(my_buf.get(len).unwrap() ^ (gene_cipher | 0x80));
         
@@ -47,13 +47,13 @@ fn decrypt (buffer: BString) {
             my_iter = my_iter + 1;
         }
     
-    let decipher_save = std::str::from_utf8(&decipher_buf);
+        let decipher_save = std::str::from_utf8(&decipher_buf);
 
-    //println!("{:?}", my_buf);
-    //println!("Start of Conversion.");
-    //println!("{}", decipher_save.expect("msg"));
+        //println!("{:?}", my_buf);
+        //println!("Start of Conversion.");
+        //println!("{}", decipher_save.expect("msg"));
 
-    write_out(decipher_save.unwrap_or("borked").to_string());
+        write_out(decipher_save.unwrap_or("borked").to_string());
     }
 }
 
