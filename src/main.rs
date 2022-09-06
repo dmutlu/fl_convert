@@ -1,4 +1,4 @@
-use std::{fs::File, io::{Read, self}};
+use std::{fs::File, io::{Read, self, Write}};
 use bstr::{BString};
 
 /*fn read_save(filename: &str) -> io::Result<String> {
@@ -32,14 +32,14 @@ fn decrypt (buffer: BString) {
     //    print!("{}", i);
     //}
 
-    println!("Buffer length: {:?}", byte_buf_len);
+    //println!("Buffer length: {:?}", byte_buf_len);
 
     let mut decipher_buf: Vec<u8> = Vec::new();
 
-    while my_iter < byte_buf_len {
-        let gene_cipher: u8 = ((gene[my_iter % 4] + len) % 256).try_into().unwrap();
+    while len < byte_buf_len {
+        let gene_cipher: u8 = ((gene[len % 4] + len) % 256).try_into().unwrap();
         
-        decipher_buf.push(my_buf.get(my_iter).unwrap() ^ (gene_cipher | 0x80));
+        decipher_buf.push(my_buf.get(len).unwrap() ^ (gene_cipher | 0x80));
       
         len = len + 1;
         my_iter = my_iter + 1;
@@ -47,10 +47,11 @@ fn decrypt (buffer: BString) {
 
     let decipher_save = std::str::from_utf8(&decipher_buf);
 
-    println!("{:?}", my_buf);
-    println!("Start of Conversion.");
-    println!("{}", decipher_save.expect("msg"));
+    //println!("{:?}", my_buf);
+    //println!("Start of Conversion.");
+    //println!("{}", decipher_save.expect("msg"));
 
+    write_out(decipher_save.unwrap_or("borked").to_string());
 }
 
 /*fn decrypt(buffer: Chars<'_>) {
@@ -109,6 +110,13 @@ fn decrypt (buffer: BString) {
     };*/
 }*/
 
+fn write_out(buf: String) -> io::Result<()> {
+    let mut buffer = File::create("D:\\Users\\Devin\\source\\tmp\\my_save.fl")?;
+    //let mut w = Vec::new();
+    write!(buffer, "{}", buf)?;
+    Ok(())
+}
+
 fn main() {
     // this method needs to be inside main() method
     //env::set_var("RUST_BACKTRACE", "1");
@@ -136,7 +144,7 @@ fn main() {
         }
     }*/
 
-    decrypt(fl_save.unwrap());
+    decrypt(fl_save.unwrap()); 
 
     //for char in fl_save_crypt.unwrap_or("Borked".to_string()).chars().next_back(){
     //        fl_save_decrypt.push(char);
