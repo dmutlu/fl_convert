@@ -1,5 +1,5 @@
-use std::{fs::File, io::{Read, self, Write}};
-use bstr::{BString};
+use std::{fs::File, io::{Read, self, Write}, convert::TryInto};
+use bstr::{BString, ByteVec, ByteSlice};
 
 /*fn read_save(filename: &str) -> io::Result<String> {
     let mut file = File::open(&filename.trim())?;
@@ -36,15 +36,17 @@ fn decrypt (buffer: BString) {
 
     let mut decipher_buf: Vec<u8> = Vec::new();
 
-    while len < byte_buf_len {
-        let gene_cipher: u8 = ((gene[len % 4] + len) % 256).try_into().unwrap();
+    // Check for encrypted save.fl file header.
+    if my_buf.contains_str("FLS1") {
+        while len < byte_buf_len {
+            let gene_cipher: u8 = ((gene[len % 4] + len) % 256).try_into().unwrap();
+            
+            decipher_buf.push(my_buf.get(len).unwrap() ^ (gene_cipher | 0x80));
         
-        decipher_buf.push(my_buf.get(len).unwrap() ^ (gene_cipher | 0x80));
-      
-        len = len + 1;
-        my_iter = my_iter + 1;
-    }
-
+            len = len + 1;
+            my_iter = my_iter + 1;
+        }
+    
     let decipher_save = std::str::from_utf8(&decipher_buf);
 
     //println!("{:?}", my_buf);
@@ -52,6 +54,7 @@ fn decrypt (buffer: BString) {
     //println!("{}", decipher_save.expect("msg"));
 
     write_out(decipher_save.unwrap_or("borked").to_string());
+    }
 }
 
 /*fn decrypt(buffer: Chars<'_>) {
