@@ -1,5 +1,5 @@
-use std::{fs::File, io::{Read, self, Write}, convert::TryInto};
-use bstr::{BString, ByteVec, ByteSlice};
+use std::{fs::File, io::{Read, self, Write}, convert::TryInto, process::exit};
+use bstr::{BString, ByteSlice};
 
 /*fn read_save(filename: &str) -> io::Result<String> {
     let mut file = File::open(&filename.trim())?;
@@ -9,21 +9,26 @@ use bstr::{BString, ByteVec, ByteSlice};
 }*/
 
 fn read_save(filename: &str) -> io::Result<BString> {
-    let mut file = File::open(&filename.trim())?;
-    let mut buffer = Vec::new();
-    
+    let mut file: File = File::open(&filename.trim())?;
+    let mut buffer: Vec<u8> = Vec::new();
+    let mut _buffer_debug: Vec<u8> = Vec::new();
+        
+    //file.read_to_end(&mut buffer_debug)?;
     // Read the whole file
     file.read_to_end(&mut buffer)?;
 
     // Use a Byte String because FL saves are ANSI (Windows code page WinLatin1)
     let contents = BString::from(buffer);
+
+    //println!("{:?}", buffer_debug);
+
     Ok(contents)
 }
 
-fn decrypt (buffer: BString) {
+fn decrypt (buffer: BString) -> io::Result<String> {
     let mut len =  4;
     let mut my_iter = 0;
-    let gene = [0x0047, 0x0045, 0x004E, 0x0045];
+    let gene = [0x0047, 0x0065, 0x006E, 0x0065];
     let my_buf = &buffer;
     let byte_buf_len = my_buf.len();
     //let byte_buf = my_buf.as_bytes();
@@ -43,8 +48,8 @@ fn decrypt (buffer: BString) {
             
             decipher_buf.push(my_buf.get(len).unwrap() ^ (gene_cipher | 0x80));
         
-            len = len + 1;
-            my_iter = my_iter + 1;
+            len += 1;
+            my_iter += 1;
         }
     
         let decipher_save = std::str::from_utf8(&decipher_buf);
@@ -53,7 +58,12 @@ fn decrypt (buffer: BString) {
         //println!("Start of Conversion.");
         //println!("{}", decipher_save.expect("msg"));
 
-        write_out(decipher_save.unwrap_or("borked").to_string());
+        //write_out(decipher_save.unwrap_or("borked").to_string());
+
+        // Return the deciphered save data.
+        Ok(decipher_save.unwrap().to_string())
+    } else {
+        Err(exit(0))
     }
 }
 
@@ -121,39 +131,15 @@ fn write_out(buf: String) -> io::Result<()> {
 }
 
 fn main() {
-    // this method needs to be inside main() method
-    //env::set_var("RUST_BACKTRACE", "1");
-    let _debug = false;
-
     let mut fl_path = String::new();
     let mut _fl_save_decrypt: Vec<char> = Vec::new();
 
     println!("Input Save Path:");
     io::stdin().read_line(&mut fl_path).expect("Cannot read input.");
 
-    println!("{:?}", &fl_path.trim());
-    //println!("{:?}", read_save(&fl_path));
-
     let _fl_save_crypt = read_save(&fl_path);
 
     let fl_save = read_save(&fl_path);
 
-    //let char_buffer = fl_save.chars();
-
-    // Debug Output of save file buffer.
-    /*if debug {
-        for i in char_buffer {
-            print!("{}", i);
-        }
-    }*/
-
-    decrypt(fl_save.unwrap()); 
-
-    //for char in fl_save_crypt.unwrap_or("Borked".to_string()).chars().next_back(){
-    //        fl_save_decrypt.push(char);
-    // }
-
-    // let s: String = fl_save_decrypt.into_iter().collect();
-
-    // println!("{}", s);
+    write_out(decrypt(fl_save.unwrap()).unwrap());
 }

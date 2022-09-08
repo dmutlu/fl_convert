@@ -4,12 +4,12 @@ version = 3
 
 [[package]]
 name = "bstr"
-version = "1.0.0-pre.3"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2c7f5c92fd658e9b84052fd01ebea0ae21d444828fb9de3c28aa48b9cf6c9e0"
+checksum = "11aee792a41973cf54c837d6f344e35a03076328831b01ef30a14d965d47bfbc"
 dependencies = [
- "lazy_static",
  "memchr",
+ "once_cell",
  "regex-automata",
  "serde",
 ]
@@ -22,16 +22,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "lazy_static"
-version = "1.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
-
-[[package]]
 name = "memchr"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2dffe52ecf27772e601905b7522cb4ef790d2cc203488bbd0e2fe85fcb74566d"
+
+[[package]]
+name = "once_cell"
+version = "1.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f7254b99e31cad77da24b08ebf628882739a608578bb1bcdfc1f9c21260d7c0"
 
 [[package]]
 name = "regex-automata"
