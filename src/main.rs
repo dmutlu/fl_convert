@@ -1,4 +1,4 @@
-use std::{fs::File, io::{Read, self, Write}, convert::TryInto, process::exit};
+use std::{fs::File, io::{Read, self, Write}, convert::TryInto};
 use bstr::{BString, ByteSlice};
 
 fn read_save(filename: &str) -> io::Result<BString> {
@@ -40,14 +40,14 @@ fn decrypt (buffer: BString) -> io::Result<String> {
         Ok(decipher_save.unwrap().to_string())
 
     } else { // Not encrypted.
-        exit(0)
+        Ok(my_buf.to_string())
     }
 }
 
 fn write_out(buf: String) -> io::Result<()> {
-    let mut buffer = File::create("D:\\Users\\Devin\\source\\tmp\\my_save.fl")?;
+    let mut fl_file = File::create("D:\\Users\\Devin\\source\\tmp\\my_save.fl")?;
 
-    write!(buffer, "{}", buf)?;
+    write!(fl_file, "{}", buf)?;
     Ok(())
 }
 
@@ -57,7 +57,6 @@ TODO:
     * Get current save file name for use in new out file.
     * Backup current file.
     * Allow for dynamic save location.
-    * Add logic for unencrypted file.
     * Edit buffer for delta and mission value.
     * GUI
 */
@@ -73,8 +72,5 @@ fn main() {
 
     let fl_save = read_save(&fl_path).unwrap();
 
-   match write_out(decrypt(fl_save).unwrap()) {
-        Err(e) => println!("{:?}", e),
-        _ => ()
-    }
+    if let Err(e) = write_out(decrypt(fl_save).unwrap()) { println!("{:?}", e) }
 }
