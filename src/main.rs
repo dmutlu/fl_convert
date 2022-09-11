@@ -75,13 +75,33 @@ fn write_out(save_dir: PathBuf, buf: String) -> io::Result<()> {
     Ok(())
 }
 
+fn save_prompt(usr_ans: &mut String, pwd: PathBuf, decrypted_save: String, fix: bool) {
+    loop {
+        println!("");
+        println!("Save new file in current directory? (Y/N):");
+        stdin().read_line(usr_ans).expect("Cannot read input.");
+    
+        if usr_ans.to_lowercase().contains("y") || usr_ans.to_lowercase().contains("yes") {
+            if fix {
+                if let Err(e) = write_out(pwd, fix_save(decrypted_save)) { println!("{:?}", e) }
+                break;
+            } else {
+                if let Err(e) = write_out(pwd, decrypted_save) { println!("{:?}", e) }
+                break;
+            }
+        } else if usr_ans.to_lowercase().contains("n") || usr_ans.to_lowercase().contains("no") {
+            break;
+        } else {
+            println!("Answer must be \"Y, Yes, N, or No\".");
+        }
+    }
+}
+
 /*
 TODO:
-    * Replace prompt with CLI args.
     * Get current save file name for use in new out file.
     * Backup current file.
     * Allow for dynamic save location.
-    * Edit buffer for delta and mission value.
     * GUI
 */
 
@@ -93,22 +113,22 @@ fn main() {
     println!("Input Save Path:");
     stdin().read_line(&mut fl_path).expect("Cannot read input.");
 
-    let fl_save: BString = read_save(&fl_path).unwrap();
+    let fl_save: BString = read_save(&fl_path).expect("Cannot find save file.");
     let decrypted_save: String = decrypt(fl_save).unwrap();
 
     //fix_save(decrypted_save);
 
-    loop {
-        println!("Save new file in current directory? (Y/N):");
-        stdin().read_line(&mut usr_ans).expect("Cannot read input.");
+    println!("");
+    println!("1. Convert Save");
+    println!("2. Fix Save and/or Convert");
+    println!("0. Exit");
+    stdin().read_line(&mut usr_ans).expect("Cannot read input.");
 
-        if usr_ans.to_lowercase().contains("y") || usr_ans.to_lowercase().contains("yes") {
-            if let Err(e) = write_out(pwd, decrypted_save) { println!("{:?}", e) }
-            break;
-        } else if usr_ans.to_lowercase().contains("n") || usr_ans.to_lowercase().contains("no") {
-            break;
-        } else {
-            println!("Answer must be \"Y, Yes, N, or No\".");
-        }
+    if usr_ans.contains("1") {
+        save_prompt(&mut usr_ans, pwd, decrypted_save, false);
+    } else if usr_ans.contains("2") {
+        save_prompt(&mut usr_ans, pwd, decrypted_save, true);
+    } else {
+        println!("Invalid Choice: {}", usr_ans)
     }
 }

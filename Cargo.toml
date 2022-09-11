@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 bstr = "1.0.0"
-regex = "1.6"
+regex = "1.6.0"
