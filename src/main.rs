@@ -1,26 +1,30 @@
-use std::{fs::File, io::{Read, self, Write}, convert::TryInto};
+use std::{fs::File, io::{Read, self, Write, stdin}, convert::TryInto, env::{current_dir}, path::{PathBuf}, str::FromStr};
 use bstr::{BString, ByteSlice};
+use regex::{Regex, Captures};
 
 fn read_save(filename: &str) -> io::Result<BString> {
     let mut file: File = File::open(&filename.trim())?;
     let mut buffer: Vec<u8> = Vec::new();
         
-    // Read the whole file
+    // Read the whole file.
     file.read_to_end(&mut buffer)?;
 
-    // Use a Byte String because FL saves are ANSI (Windows code page WinLatin1)
+    // Use a Byte String because FL saves are ANSI (Windows code page WinLatin1).
     let contents = BString::from(buffer);
 
     Ok(contents)
 }
 
 fn decrypt (buffer: BString) -> io::Result<String> {
+    // First 4 bytes of the file "FLS1" to skip.
     let mut len =  4;
     let mut my_iter = 0;
+
+    // "Gene, Gene, The Cinnabon Machine"
     let gene = [0x0047, 0x0065, 0x006E, 0x0065];
+
     let my_buf = &buffer;
     let byte_buf_len = my_buf.len();
-
     let mut decipher_buf: Vec<u8> = Vec::new();
 
     // Check for encrypted save.fl file header.
@@ -39,13 +43,33 @@ fn decrypt (buffer: BString) -> io::Result<String> {
         // Return the deciphered save data.
         Ok(decipher_save.unwrap().to_string())
 
-    } else { // Not encrypted.
+    } else { // Not encrypted, return original buffer data.
         Ok(my_buf.to_string())
     }
 }
 
-fn write_out(buf: String) -> io::Result<()> {
-    let mut fl_file = File::create("D:\\Users\\Devin\\source\\tmp\\my_save.fl")?;
+fn fix_save(buf: String) -> String {
+    let re: Regex = Regex::new(r"MissionNum.*(.+)").unwrap();
+
+    let mission_cap: Captures = re.captures(&buf).expect("The 'MissionNum' parameter was not found.");
+    let mission_orig_str: &str = mission_cap.get(0).unwrap().as_str();
+    let mission_num_str: &str = mission_cap.get(1).unwrap().as_str();
+    let mission_num: i32 = FromStr::from_str(mission_num_str).unwrap();
+    let mission_inc: i32 = mission_num + 1;
+    let new_mission: String = mission_orig_str.replace(mission_num_str, mission_inc.to_string().as_str());
+    
+    let delta: &str = "delta_worth = -1.000000";
+    let new_delta: &str = "delta_worth = 1.000000";
+    
+    let my_buf: String = buf.replace(mission_orig_str, new_mission.as_str());
+    let my_buf: String = my_buf.replace(delta, new_delta);
+
+    my_buf
+}
+
+fn write_out(save_dir: PathBuf, buf: String) -> io::Result<()> {
+    let save_path: PathBuf = save_dir.join("my_save.fl");
+    let mut fl_file = File::create(save_path)?;
 
     write!(fl_file, "{}", buf)?;
     Ok(())
@@ -62,15 +86,29 @@ TODO:
 */
 
 fn main() {
-    let mut fl_path = String::new();
-    let mut _fl_save_decrypt: Vec<char> = Vec::new();
+    let pwd: PathBuf = current_dir().expect("Cannot access current directory.");
+    let mut usr_ans: String = String::new();
+    let mut fl_path: String = String::new();
 
     println!("Input Save Path:");
-    io::stdin().read_line(&mut fl_path).expect("Cannot read input.");
+    stdin().read_line(&mut fl_path).expect("Cannot read input.");
 
-    let _fl_save_crypt = read_save(&fl_path);
+    let fl_save: BString = read_save(&fl_path).unwrap();
+    let decrypted_save: String = decrypt(fl_save).unwrap();
 
-    let fl_save = read_save(&fl_path).unwrap();
+    //fix_save(decrypted_save);
 
-    if let Err(e) = write_out(decrypt(fl_save).unwrap()) { println!("{:?}", e) }
+    loop {
+        println!("Save new file in current directory? (Y/N):");
+        stdin().read_line(&mut usr_ans).expect("Cannot read input.");
+
+        if usr_ans.to_lowercase().contains("y") || usr_ans.to_lowercase().contains("yes") {
+            if let Err(e) = write_out(pwd, decrypted_save) { println!("{:?}", e) }
+            break;
+        } else if usr_ans.to_lowercase().contains("n") || usr_ans.to_lowercase().contains("no") {
+            break;
+        } else {
+            println!("Answer must be \"Y, Yes, N, or No\".");
+        }
+    }
 }
