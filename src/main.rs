@@ -1,4 +1,4 @@
-use std::{fs::{File, self}, io::{Read, self, Write, stdin}, convert::TryInto, env::current_dir, path::{PathBuf}, str::FromStr, process::{exit}};
+use std::{fs::{File, self}, io::{Read, self, Write, stdin}, convert::TryInto, env::current_dir, path::{PathBuf}, str::FromStr, process::{exit}, ffi::OsStr};
 use bstr::{BString, ByteSlice};
 use chrono::{DateTime, Utc};
 use regex::{Regex, Captures};
@@ -74,20 +74,16 @@ fn fix_save(buf: String) -> String {
     my_buf
 }
 
-fn write_out(save_dir: PathBuf, buf: String) -> io::Result<()> {
-    let save_path: PathBuf = save_dir.join("my_save.fl");
+fn write_out(save_dir: PathBuf, save_name: Option<&OsStr>, buf: String) -> io::Result<()> {
+    let save_path: PathBuf = save_dir.join(save_name.unwrap());
     let mut fl_file = File::create(save_path)?;
 
     write!(fl_file, "{}", buf)?;
     Ok(())
 }
 
-fn backup_save(fl_path: String) {
+fn backup_save(orig_path: &PathBuf, fl_name: Option<&OsStr>) {
     let now: DateTime<Utc> = Utc::now();
-    // Get the original save's path.
-    let orig_path: PathBuf = PathBuf::from(fl_path.trim());
-    // Get just the name for the original save.
-    let fl_name = orig_path.file_name();
     let my_path: PathBuf = PathBuf::from(fl_name.unwrap());
     let fl_date: String = format!("fl.{}.orig", now.format("%Y%m%d_%H%M%S"));
     let fl_backup: PathBuf = my_path.with_extension(fl_date);
@@ -100,9 +96,14 @@ fn backup_save(fl_path: String) {
 
 fn fl_options(fl_path: String, pwd: PathBuf, fl_save: BString, fix: bool) {
     let mut usr_ans: String = String::new();
+    // Get the original save's path.
+    let orig_path: PathBuf = PathBuf::from(fl_path.trim());
+    // Get just the name for the original save.
+    let fl_name: Option<&OsStr> = orig_path.file_name();
     let decrypted_save: String = decrypt(fl_save).expect("Unable to read save contents to buffer.");
     
-    backup_save(fl_path);
+    
+    backup_save(&orig_path, fl_name);
              
     loop {
         println!();
@@ -113,10 +114,10 @@ fn fl_options(fl_path: String, pwd: PathBuf, fl_save: BString, fix: bool) {
 
         if usr_ans.contains('y') || usr_ans.contains("yes") {
             if fix {
-                if let Err(e) = write_out(pwd, fix_save(decrypted_save)) { println!("{:?}", e) }
+                if let Err(e) = write_out(pwd, fl_name, fix_save(decrypted_save)) { println!("{:?}", e) }
                 break;
             } else {
-                if let Err(e) = write_out(pwd, decrypted_save) { println!("{:?}", e) }
+                if let Err(e) = write_out(pwd, fl_name, decrypted_save) { println!("{:?}", e) }
                 break;
             }
         } else if usr_ans.contains('n') || usr_ans.contains("no") {
@@ -128,11 +129,9 @@ fn fl_options(fl_path: String, pwd: PathBuf, fl_save: BString, fix: bool) {
 }
 
 /*
-TODO:
-    * Get current save file name for use in new out file. (0)
-    * Backup current file. (90)
-    * Allow for dynamic save location. (50)
-    * GUI (0)
+    TODO:
+        * Allow for dynamic save location. (50)
+        * GUI (0)
 */
 
 fn main() {
