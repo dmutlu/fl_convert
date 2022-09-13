@@ -1,4 +1,4 @@
-use std::{fs::{File, self}, io::{Read, self, Write, stdin}, convert::TryInto, env::current_dir, path::{PathBuf}, str::FromStr, process::{exit}, ffi::OsStr};
+use std::{fs::{File, self}, io::{Read, self, Write, stdin, Error, ErrorKind}, convert::TryInto, env::current_dir, path::{PathBuf}, str::FromStr, process::{exit}, ffi::OsStr};
 use bstr::{BString, ByteSlice};
 use chrono::{DateTime, Utc};
 use regex::{Regex, Captures};
@@ -6,6 +6,7 @@ use regex::{Regex, Captures};
 fn read_save(filename: &str) -> io::Result<BString> {
     let mut file: File = File::open(&filename.trim())?;
     let mut buffer: Vec<u8> = Vec::new();
+    let eof_error  = Error::from(ErrorKind::UnexpectedEof);
         
     // Read the whole file.
     file.read_to_end(&mut buffer)?;
@@ -13,7 +14,11 @@ fn read_save(filename: &str) -> io::Result<BString> {
     // Use a Byte String because FL saves are ANSI (Windows code page WinLatin1).
     let contents: BString = BString::from(buffer);
 
-    Ok(contents)
+    if contents.is_empty() {
+        Err(eof_error)
+    } else {
+        Ok(contents)
+    }
 }
 
 fn decrypt (buffer: BString) -> io::Result<String> {
@@ -141,7 +146,7 @@ fn main() {
     println!("Input Save Path:");
     stdin().read_line(&mut fl_path).expect("Cannot read input.");
 
-    let fl_save: BString = read_save(&fl_path).expect("Cannot find save file.");
+    let fl_save: BString = read_save(&fl_path).expect("Save file should not be empty.");
 
     println!();
     println!("1. Convert Save");
