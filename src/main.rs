@@ -101,8 +101,7 @@ fn fl_options(fl_path: String, pwd: PathBuf, fl_save: BString, fix: bool) {
     // Get just the name for the original save.
     let fl_name: Option<&OsStr> = orig_path.file_name();
     let decrypted_save: String = decrypt(fl_save).expect("Unable to read save contents to buffer.");
-    
-    
+        
     backup_save(&orig_path, fl_name);
              
     loop {
