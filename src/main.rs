@@ -6,7 +6,7 @@ use regex::{Regex, Captures};
 fn read_save(filename: &str) -> io::Result<BString> {
     let mut file: File = File::open(&filename.trim())?;
     let mut buffer: Vec<u8> = Vec::new();
-    let eof_error  = Error::from(ErrorKind::UnexpectedEof);
+    let eof_error: Error  = Error::from(ErrorKind::UnexpectedEof);
         
     // Read the whole file.
     file.read_to_end(&mut buffer)?;
@@ -21,7 +21,7 @@ fn read_save(filename: &str) -> io::Result<BString> {
     }
 }
 
-fn decrypt (buffer: BString) -> io::Result<String> {
+fn decrypt (buffer: &BString) -> io::Result<String> {
     // First 4 bytes of the file "FLS1" to skip.
     let mut len: usize =  4;
     let mut my_iter: usize = 0;
@@ -81,7 +81,7 @@ fn fix_save(buf: String) -> String {
 
 fn write_out(save_dir: PathBuf, save_name: Option<&OsStr>, buf: String) -> io::Result<()> {
     let save_path: PathBuf = save_dir.join(save_name.unwrap());
-    let mut fl_file = File::create(save_path)?;
+    let mut fl_file: File = File::create(save_path)?;
 
     write!(fl_file, "{}", buf)?;
     Ok(())
@@ -99,16 +99,15 @@ fn backup_save(orig_path: &PathBuf, fl_name: Option<&OsStr>) {
     println!("Backup complete: {}", fl_backup.display());
 }
 
-fn fl_options(fl_path: String, pwd: PathBuf, fl_save: BString, fix: bool) {
+fn fl_options(fl_path: &String, pwd: &PathBuf, fl_save: &BString, fix: bool) {
     let mut usr_ans: String = String::new();
+    let mut usr_path: String = String::new();
     // Get the original save's path.
     let orig_path: PathBuf = PathBuf::from(fl_path.trim());
     // Get just the name for the original save.
     let fl_name: Option<&OsStr> = orig_path.file_name();
     let decrypted_save: String = decrypt(fl_save).expect("Unable to read save contents to buffer.");
-        
-    backup_save(&orig_path, fl_name);
-             
+
     loop {
         println!();
         println!("Save new file in current directory? (Y/N):");
@@ -117,15 +116,38 @@ fn fl_options(fl_path: String, pwd: PathBuf, fl_save: BString, fix: bool) {
         let usr_ans: String = usr_ans.to_lowercase();
 
         if usr_ans.contains('y') || usr_ans.contains("yes") {
+            backup_save(&orig_path, fl_name);
+
             if fix {
-                if let Err(e) = write_out(pwd, fl_name, fix_save(decrypted_save)) { println!("{:?}", e) }
+                if let Err(e) = write_out(pwd.to_path_buf(), fl_name, fix_save(decrypted_save)) { println!("{:?}", e) }
                 break;
             } else {
-                if let Err(e) = write_out(pwd, fl_name, decrypted_save) { println!("{:?}", e) }
+                if let Err(e) = write_out(pwd.to_path_buf(), fl_name, decrypted_save) { println!("{:?}", e) }
                 break;
             }
         } else if usr_ans.contains('n') || usr_ans.contains("no") {
-            break;
+            println!("Input desired directory path:");
+            stdin().read_line(&mut usr_path).expect("Cannot read input.");
+
+            let save_path: PathBuf = PathBuf::from(usr_path.trim());
+
+            println!();
+            println!("Save Directory: {}", save_path.display());
+            
+            if let Err(e) = save_path.try_exists() { 
+                println!("{:?}", e);
+                exit(1);
+            }
+
+            backup_save(&orig_path, fl_name);
+
+            if fix {
+                if let Err(e) = write_out(save_path, fl_name, fix_save(decrypted_save)) { println!("{:?}", e) }
+                break;
+            } else {
+                if let Err(e) = write_out(save_path, fl_name, decrypted_save) { println!("{:?}", e) }
+                break;
+            }
         } else {
             println!("Answer must be \"Y, Yes, N, or No\".");
         }
@@ -143,24 +165,29 @@ fn main() {
     let mut usr_ans: String = String::new();
     let mut fl_path: String = String::new();
 
-    println!("Input Save Path:");
+    println!("Input save file path:");
     stdin().read_line(&mut fl_path).expect("Cannot read input.");
 
     let fl_save: BString = read_save(&fl_path).expect("Save file should not be empty.");
 
-    println!();
-    println!("1. Convert Save");
-    println!("2. Fix Save and/or Convert");
-    println!("0. Exit");
-    stdin().read_line(&mut usr_ans).expect("Cannot read input.");
+    loop {
+        println!();
+        println!("1. Convert Save");
+        println!("2. Fix Save and/or Convert");
+        println!("0. Exit");
+        stdin().read_line(&mut usr_ans).expect("Cannot read input.");
 
-    if usr_ans.contains('1') {
-        fl_options(fl_path, pwd, fl_save, false);
-    } else if usr_ans.contains('2') {
-        fl_options(fl_path, pwd, fl_save, true);
-    } else if usr_ans.contains('0') {
-        exit(0);
-    } else {
-        println!("Invalid Choice: {}", usr_ans);
+        match usr_ans.trim() {
+        "1" => {
+            fl_options(&fl_path, &pwd, &fl_save, false);
+            break },
+        "2" => {
+            fl_options(&fl_path, &pwd, &fl_save, true);
+            break },
+        "0" => exit(0),
+            _  => {
+                println!("Invalid Choice: {}", usr_ans);
+                usr_ans.clear(); },
+        }
     }
 }
