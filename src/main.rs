@@ -186,8 +186,8 @@ fn main() {
             break },
         "0" => exit(0),
             _  => {
-                println!("Invalid Choice: {}", usr_ans);
-                usr_ans.clear(); },
+            println!("Invalid Choice: {}", usr_ans);
+            usr_ans.clear(); },
         }
     }
 }
