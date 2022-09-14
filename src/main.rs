@@ -1,4 +1,4 @@
-use std::{fs::{File, self}, io::{Read, self, Write, stdin, Error, ErrorKind}, convert::TryInto, env::current_dir, path::{PathBuf}, str::FromStr, process::{exit}, ffi::OsStr};
+use std::{fs::{File, self}, io::{Read, self, Write, stdin, Error, ErrorKind}, convert::TryInto, env::current_dir, path::{PathBuf, Path}, str::FromStr, process::{exit}, ffi::OsStr};
 use bstr::{BString, ByteSlice};
 use chrono::{DateTime, Utc};
 use regex::{Regex, Captures};
@@ -29,7 +29,7 @@ fn decrypt (buffer: &BString) -> io::Result<String> {
     // "Gene, Gene, The Cinnabon Machine."
     let gene: [usize; 4] = [0x0047, 0x0065, 0x006E, 0x0065];
 
-    let my_buf: &BString = &buffer;
+    let my_buf: &BString = buffer;
     let byte_buf_len: usize = my_buf.len();
     let mut decipher_buf: Vec<u8> = Vec::new();
 
@@ -99,7 +99,7 @@ fn backup_save(orig_path: &PathBuf, fl_name: Option<&OsStr>) {
     println!("Backup complete: {}", fl_backup.display());
 }
 
-fn fl_options(fl_path: &String, pwd: &PathBuf, fl_save: &BString, fix: bool) {
+fn fl_options(fl_path: &str, pwd: &Path, fl_save: &BString, fix: bool) {
     let mut usr_ans: String = String::new();
     let mut usr_path: String = String::new();
     // Get the original save's path.
@@ -156,7 +156,6 @@ fn fl_options(fl_path: &String, pwd: &PathBuf, fl_save: &BString, fix: bool) {
 
 /*
     TODO:
-        * Allow for dynamic save location. (50)
         * GUI (0)
 */
 
