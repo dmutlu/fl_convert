@@ -12,11 +12,11 @@ use directories::UserDirs;
 
 #[derive(Default, NwgUi)]
 pub struct FLSaveConvert {
-    #[nwg_control(size: (400, 320), center: true, title: "FL Save Convert")]
+    #[nwg_control(flags: "WINDOW|MINIMIZE_BOX|VISIBLE", size: (500, 320), center: true, title: "FL Save Convert")]
     #[nwg_events( OnWindowClose: [FLSaveConvert::exit])]
     window: nwg::Window,
 
-    #[nwg_layout(parent: window, max_row: Some(5), max_column: Some(5), min_size: [400, 300])]
+    #[nwg_layout(parent: window, max_row: Some(5), max_column: Some(5))]
     main_layout: nwg::GridLayout,
 
     // File Menu
@@ -41,8 +41,9 @@ pub struct FLSaveConvert {
     #[nwg_resource(title: "Open Save", action: nwg::FileDialogAction::Open, filters: "FL(*.fl)|TXT(*.txt)|Any (*.*)")]
     dialog: nwg::FileDialog,
 
+    // Main layout items
     #[nwg_control(text: "Open", focus: true, size: (100, 200))]
-    #[nwg_layout_item(layout: main_layout, col: 0, row: 0)]
+    #[nwg_layout_item(layout: main_layout, col: 0, row: 0, col_span: 1)]
     #[nwg_events(OnButtonClick: [FLSaveConvert::open_file])]
     open_btn: nwg::Button,
 
