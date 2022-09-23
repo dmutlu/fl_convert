@@ -18,7 +18,7 @@ pub fn read_save(filename: &str) -> io::Result<BString> {
     } else {
         Ok(contents)
     }
-}
+} // End of read_save.
 
 pub fn write_out(save_dir: PathBuf, save_name: Option<&OsStr>, buf: String) -> io::Result<()> {
     let save_path: PathBuf = save_dir.join(save_name.unwrap());
@@ -26,15 +26,16 @@ pub fn write_out(save_dir: PathBuf, save_name: Option<&OsStr>, buf: String) -> i
 
     write!(fl_file, "{}", buf)?;
     Ok(())
-}
+} // End of write_out.
 
-pub fn backup_save(orig_path: &Path) {
+pub fn backup_save(orig_path: &Path) -> Result<&'static str, &'static str>{
     let now: DateTime<Utc> = Utc::now();
     let fl_date: String = format!("fl.{}.orig", now.format("%Y%m%d_%H%M%S"));
     let fl_backup: PathBuf = orig_path.with_extension(fl_date);
 
-    println!();
-    println!("Making backup of original save.");
-    fs::copy(orig_path, &fl_backup).expect("Unable to create backup of save file.");
-    println!("Backup complete: {}", fl_backup.display());
-}
+    if let Ok(..) = fs::copy(orig_path, &fl_backup){
+        Ok("[INFO]: Backup complete.\r\n")
+    } else {
+        Err("[ERROR]: Unable to create backup of save file.\r\n")
+    }
+} // End of backup_save.

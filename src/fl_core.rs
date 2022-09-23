@@ -33,7 +33,7 @@ pub fn decrypt(buffer: &BString) -> io::Result<String> {
     } else { // Not encrypted, return original buffer data.
         Ok(my_buf.to_string())
     }
-}
+} // End of decrypt.
 
 pub fn fix_save(buf: String) -> String {
     // Match 'MissionNum' line, group assigned value.
@@ -58,4 +58,4 @@ pub fn fix_save(buf: String) -> String {
     let my_buf: String = my_buf.replace(delta, new_delta);
 
     my_buf
-}
+} // End of fix_save.

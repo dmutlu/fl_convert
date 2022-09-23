@@ -12,17 +12,36 @@ use directories::UserDirs;
 
 #[derive(Default, NwgUi)]
 pub struct FLSaveConvert {
-    #[nwg_control(size: (400, 300), position: (400, 150), title: "FL Save Convert")]
-    #[nwg_events( OnWindowClose: [FLSaveConvert::exit] )]
+    #[nwg_control(size: (400, 320), center: true, title: "FL Save Convert")]
+    #[nwg_events( OnWindowClose: [FLSaveConvert::exit])]
     window: nwg::Window,
 
-    #[nwg_layout(parent: window, max_row: Some(5), max_column: Some(5) )]
+    #[nwg_layout(parent: window, max_row: Some(5), max_column: Some(5), min_size: [400, 300])]
     main_layout: nwg::GridLayout,
 
-    #[nwg_resource(title: "Open File", action: nwg::FileDialogAction::Open, filters: "FL(*.fl)|TXT(*.txt)|Any (*.*)")]
+    // File Menu
+    #[nwg_control(parent: window, text: "&File")]
+    menu_file: nwg::Menu,
+
+    #[nwg_control(parent: menu_file, text: "&Open...")]
+    #[nwg_events(OnMenuItemSelected: [FLSaveConvert::open_file])]
+    menu_file_open: nwg::MenuItem,
+
+    #[nwg_control(parent: menu_file)]
+    menu_file_sep0: nwg::MenuSeparator,
+
+    #[nwg_control(parent: menu_file, text: "E&xit")]
+    #[nwg_events(OnMenuItemSelected: [FLSaveConvert::exit])]
+    menu_file_exit: nwg::MenuItem,
+
+    // About Menu
+    #[nwg_control(parent: window, text: "&About")]
+    menu_about: nwg::Menu,
+
+    #[nwg_resource(title: "Open Save", action: nwg::FileDialogAction::Open, filters: "FL(*.fl)|TXT(*.txt)|Any (*.*)")]
     dialog: nwg::FileDialog,
 
-    #[nwg_control(text: "Open", focus: true)]
+    #[nwg_control(text: "Open", focus: true, size: (100, 200))]
     #[nwg_layout_item(layout: main_layout, col: 0, row: 0)]
     #[nwg_events(OnButtonClick: [FLSaveConvert::open_file])]
     open_btn: nwg::Button,
@@ -68,21 +87,32 @@ impl FLSaveConvert {
                     let file_name = dir;
                     // Set file name text input to FL save path.
                     self.file_name.set_text(dir);
-                           
-                    self.msg_box.set_text("[INFO]: Reading Freelancer save.\r\n");
-                    if let Ok(fl_save) = read_save(file_name) {
-                        self.msg_box.append("[INFO]: Read successful.\r\n");
-
-                        self.msg_box.append("[INFO]: Backing up your Freelancer save.\r\n");
-                        backup_save(&orig_path);
-
-                    } else {
-                        self.msg_box.append("[ERROR]: Save file may be empty or corrupt.\r\n");
-                    };
+                        
+                    self.process_file(file_name, &orig_path);
                     
                 }
             }
         }
+    }
+
+    fn process_file(&self, file_name: &str, orig_path: &PathBuf) {
+        self.msg_box.set_text("[INFO]: Reading Freelancer save.\r\n");
+
+        if let Ok(fl_save) = read_save(file_name) {
+            self.msg_box.append("[INFO]: Read successful.\r\n");
+
+            self.msg_box.append("[INFO]: Backing up your Freelancer save.\r\n");
+            
+            match backup_save(&orig_path) {
+                Ok(o) => self.msg_box.append(o),
+                Err(e) => self.msg_box.append(e),
+            };
+
+            self.msg_box.append("[INFO]: Backing up your Freelancer save.\r\n");
+
+        } else {
+            self.msg_box.append("[ERROR]: Save file may be empty or corrupt.\r\n");
+        };
     }
 
     fn exit(&self) {
