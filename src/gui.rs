@@ -1,10 +1,7 @@
-mod file_handling;
-mod fl_core;
-
 extern crate native_windows_derive as nwd;
 use crate::file_handling::*;
-use crate::fl_core::*;
 
+use bstr::{ByteSlice, BString};
 use nwd::NwgUi;
 use nwg::NativeUi;
 use std::path::{PathBuf, Path};
@@ -55,7 +52,7 @@ impl FLSaveConvert {
                 } else {
                     self.dialog.set_default_folder(user_docs.to_str().unwrap()).expect("Failed to set default folder.");
                 }
-            }
+            }    
         
             if self.dialog.run(Some(&self.window)) {
                 // Set file name text input to blank.
@@ -65,15 +62,18 @@ impl FLSaveConvert {
                     let fl_name = orig_path.file_name();
                     //let dir = directory.into_string().unwrap();
                     let dir = orig_path.to_str().unwrap();
-                    let file_name = dir;
+                    let file_name = &dir;
                     // Set file name text input to FL save path.
-                    self.file_name.set_text(dir);
+                    self.file_name.set_text(&dir);
                            
                     self.msg_box.set_text("[INFO]: Reading Freelancer save.\r\n");
                     if let Ok(fl_save) = read_save(file_name) {
                         self.msg_box.append("[INFO]: Read successful.\r\n");
-
                         self.msg_box.append("[INFO]: Backing up your Freelancer save.\r\n");
+
+                        //println!("{:?}", fl_save);
+                        println!("{:?}", orig_path.parent());
+                        println!("{:?}", fl_name);
                         backup_save(&orig_path);
 
                     } else {
@@ -91,7 +91,61 @@ impl FLSaveConvert {
 
 }
 
-fn main() {
+/*impl ImageDecoderApp {
+
+    fn open_file(&self) {
+        if let Ok(d) = env::current_dir() {
+            if let Some(d) = d.to_str() {
+                self.dialog.set_default_folder(d).expect("Failed to set default folder.");
+            }
+        }
+        
+        if self.dialog.run(Some(&self.window)) {
+            self.file_name.set_text("");
+            if let Ok(directory) = self.dialog.get_selected_item() {
+                let dir = directory.into_string().unwrap();
+                self.file_name.set_text(&dir);
+                self.read_file();
+            }
+        }
+    }
+
+    fn read_file(&self) {
+        println!("{}", self.file_name.text());
+        let image = match self.decoder.from_filename(&self.file_name.text()) {
+            Ok(img) => img,
+            Err(_) => { println!("Could not read image!"); return; }
+        };
+        
+        println!("Frame count: {}", image.frame_count());
+        println!("Format: {:?}", image.container_format());
+
+        let frame = match image.frame(0) {
+            Ok(bmp) => bmp,
+            Err(_) => { println!("Could not read image frame!"); return; }
+        };
+
+        println!("Resolution: {:?}", frame.resolution());
+        println!("Size: {:?}", frame.size());
+
+        // Create a new Bitmap image from the image data
+        match frame.as_bitmap() {
+            Ok(bitmap) => {
+                let mut img = self.loaded_image.borrow_mut();
+                img.replace(bitmap);
+                self.img.set_bitmap(img.as_ref());
+            },
+            Err(_) => { println!("Could not convert image to bitmap!"); }
+        }
+    }
+
+    fn exit(&self) {
+        nwg::stop_thread_dispatch();
+    }
+
+}*/
+
+pub(crate) fn main_wnd() {
     nwg::init().expect("Failed to init Native Windows GUI");
     nwg::Font::set_global_family("Segoe UI").expect("Failed to set default font");
 
