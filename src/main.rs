@@ -8,7 +8,32 @@ use crate::fl_core::*;
 use nwd::NwgUi;
 use nwg::NativeUi;
 use std::path::{PathBuf, Path};
+use std::thread;
 use directories::UserDirs;
+
+#[derive(Default, NwgUi)]
+pub struct AboutWindow {
+    #[nwg_control(flags: "WINDOW|VISIBLE", size: (300, 200), center: true, title: "About")]
+    #[nwg_events( OnWindowClose: [AboutWindow::close])]
+    about_window: nwg::Window,
+}
+
+impl AboutWindow {
+    fn popup(sender: nwg::NoticeSender) {
+        thread::spawn(move || {
+            // Create the UI just like in the main function
+            let _app = AboutWindow::build_ui(Default::default()).expect("Failed to build UI");
+            nwg::dispatch_thread_events();
+
+            // Notice the main thread that the dialog completed
+            sender.notice();
+        });
+    }
+
+    fn close(&self) {
+        nwg::stop_thread_dispatch();
+    }
+}
 
 #[derive(Default, NwgUi)]
 pub struct FLSaveConvert {
@@ -36,8 +61,14 @@ pub struct FLSaveConvert {
 
     // About Menu
     #[nwg_control(parent: window, text: "&About")]
-    menu_about: nwg::Menu,
+    #[nwg_events(OnMenuItemSelected: [FLSaveConvert::open_about])]
+    menu_about: nwg::MenuItem,
 
+    #[nwg_control]
+    #[nwg_events(OnNotice: [FLSaveConvert::enable_about])]
+    about_notice: nwg::Notice,
+
+    // File browser dialog
     #[nwg_resource(title: "Open Save", action: nwg::FileDialogAction::Open, filters: "FL(*.fl)|TXT(*.txt)|Any (*.*)")]
     dialog: nwg::FileDialog,
 
@@ -116,10 +147,20 @@ impl FLSaveConvert {
         };
     }
 
+    fn open_about(&self) {
+        // Disable the button to stop the user from spawning multiple dialogs
+        self.menu_about.set_enabled(false);
+
+        AboutWindow::popup(self.about_notice.sender());
+    }
+
+    fn enable_about(&self) {
+        self.menu_about.set_enabled(true);
+    }
+
     fn exit(&self) {
         nwg::stop_thread_dispatch();
     }
-
 }
 
 fn main() {
