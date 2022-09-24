@@ -13,7 +13,7 @@ use directories::UserDirs;
 
 #[derive(Default, NwgUi)]
 pub struct AboutWindow {
-    #[nwg_control(flags: "WINDOW|VISIBLE", size: (300, 200), center: true, title: "About")]
+    #[nwg_control(flags: "WINDOW|VISIBLE", ex_flags: 0x00020000|0x00000008, size: (300, 200), center: true, title: "About")]
     #[nwg_events( OnWindowClose: [AboutWindow::close])]
     about_window: nwg::Window,
 }
