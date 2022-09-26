@@ -5,17 +5,37 @@ extern crate native_windows_derive as nwd;
 use crate::file_handling::*;
 use crate::fl_core::*;
 
+use bstr::BString;
 use nwd::NwgUi;
 use nwg::NativeUi;
+use std::cell::RefCell;
 use std::path::{PathBuf, Path};
+
 use std::thread;
 use directories::UserDirs;
 
 #[derive(Default, NwgUi)]
 pub struct AboutWindow {
-    #[nwg_control(flags: "WINDOW|VISIBLE", ex_flags: 0x00020000|0x00000008, size: (300, 200), center: true, title: "About")]
-    #[nwg_events( OnWindowClose: [AboutWindow::close])]
+    #[nwg_control(
+        flags: "WINDOW|VISIBLE",
+        ex_flags: 0x00020000|0x00000008,
+        size: (300, 100),
+        center: true,
+        title: "About")]
+    #[nwg_events(OnWindowClose: [AboutWindow::close])]
     about_window: nwg::Window,
+
+    #[nwg_resource(family: "Segoe UI", size: 15)]
+    font: nwg::Font,
+
+    #[nwg_control(
+        parent: about_window, 
+        flags: "VISIBLE|MULTI_LINE",
+        text: "Freelancer Save Convert v0.1.0\r\ngithub.com/BC46/freelancer-hd-edition\r\ngithub.com/BC46/freelancer-hd-edition", 
+        size: (300, 100),
+        position: (40, 30),
+        font: Some(&data.font))]
+    about_label: nwg::RichLabel,
 }
 
 impl AboutWindow {
@@ -37,7 +57,12 @@ impl AboutWindow {
 
 #[derive(Default, NwgUi)]
 pub struct FLSaveConvert {
-    #[nwg_control(flags: "WINDOW|MINIMIZE_BOX|VISIBLE", size: (500, 320), center: true, title: "FL Save Convert")]
+    #[nwg_control(
+        flags: "WINDOW|MINIMIZE_BOX|VISIBLE",
+        // length, height
+        size: (500, 400),
+        center: true,
+        title: "FL Save Convert")]
     #[nwg_events( OnWindowClose: [FLSaveConvert::exit])]
     window: nwg::Window,
 
@@ -69,11 +94,14 @@ pub struct FLSaveConvert {
     about_notice: nwg::Notice,
 
     // File browser dialog
-    #[nwg_resource(title: "Open Save", action: nwg::FileDialogAction::Open, filters: "FL(*.fl)|TXT(*.txt)|Any (*.*)")]
+    #[nwg_resource(
+        title: "Open Save",
+        action: nwg::FileDialogAction::Open,
+        filters: "FL(*.fl)|TXT(*.txt)|Any (*.*)")]
     dialog: nwg::FileDialog,
 
     // Main layout items
-    #[nwg_control(text: "Open", focus: true, size: (100, 200))]
+    #[nwg_control(parent: window, text: "Open", focus: true, size: (100, 200))]
     #[nwg_layout_item(layout: main_layout, col: 0, row: 0, col_span: 1)]
     #[nwg_events(OnButtonClick: [FLSaveConvert::open_file])]
     open_btn: nwg::Button,
@@ -86,8 +114,21 @@ pub struct FLSaveConvert {
     console_font: nwg::Font,
 
     #[nwg_control(font: Some(&data.console_font), readonly: true)]
-    #[nwg_layout_item(layout: main_layout, col: 0, row: 1, col_span: 5, row_span: 4)]
+    #[nwg_layout_item(layout: main_layout, col: 0, row: 1, col_span: 5, row_span: 3)]
     msg_box: nwg::RichTextBox,
+
+    #[nwg_control(parent: window, enabled: false, text: "Convert Only")]
+    #[nwg_layout_item(layout: main_layout, col: 1, row: 4, col_span: 2)]
+    #[nwg_events(OnButtonClick: [FLSaveConvert::convert_save])]
+    convert_btn: nwg::Button,
+
+    #[nwg_control(parent: window, enabled: false, text: "Fix Save")]
+    #[nwg_layout_item(layout: main_layout, col: 3, row: 4, col_span: 1)]
+    #[nwg_events(OnButtonClick: [FLSaveConvert::fix_save])]
+    fix_btn: nwg::Button,
+
+    orig_path: RefCell<PathBuf>,
+    fl_save_contents: RefCell<BString>,
 }
 
 impl FLSaveConvert {
@@ -112,39 +153,81 @@ impl FLSaveConvert {
                 // Set file name text input to blank.
                 self.file_name.set_text("");
                 if let Ok(directory) = self.dialog.get_selected_item() {
-                    let orig_path: PathBuf = directory.try_into().expect("Failed to convert directory to PathBuf.");
-                    let fl_name = orig_path.file_name();
-                    //let dir = directory.into_string().unwrap();
-                    let dir = orig_path.to_str().unwrap();
-                    let file_name = dir;
-                    // Set file name text input to FL save path.
-                    self.file_name.set_text(dir);
-                        
-                    self.process_file(file_name, &orig_path);
+                    let dir_path: PathBuf = directory.try_into().expect("Failed to convert directory to PathBuf.");
                     
+                    *self.orig_path.borrow_mut() = dir_path;
+
+                    let fl_name_ptr: *mut PathBuf = self.orig_path.as_ptr();
+                    let fl_path: *mut PathBuf = self.orig_path.as_ptr();
+
+                    unsafe {
+                        let fl_name: &str = fl_name_ptr.as_ref()
+                            .expect("Save path should not be null.")
+                            .file_name().expect("Save name should not be empty.")
+                            .to_str().expect("Unable to convert save name to str.");
+
+                        let fl_path_str: &str = fl_path.as_ref()
+                            .expect("Save path should not be null.")
+                            .to_str().expect("Cannot convert ptr to str.");                
+
+                        // Set file name text input to FL save path.
+                        self.file_name.set_text(fl_path_str);
+                            
+                        self.process_file(fl_path_str, fl_name);
+                    }
                 }
             }
         }
     }
 
-    fn process_file(&self, file_name: &str, orig_path: &PathBuf) {
+    fn process_file(&self, file_path: &str, file_name: &str) {
         self.msg_box.set_text("[INFO]: Reading Freelancer save.\r\n");
 
-        if let Ok(fl_save) = read_save(file_name) {
-            self.msg_box.append("[INFO]: Read successful.\r\n");
+        if let Ok(fl_save) = read_save(file_path) {
+            self.msg_box.append("[INFO]: ");
+            self.msg_box.append(file_name);
+            self.msg_box.append(" successfully read.\r\n");
 
-            self.msg_box.append("[INFO]: Backing up your Freelancer save.\r\n");
-            
-            match backup_save(&orig_path) {
-                Ok(o) => self.msg_box.append(o),
-                Err(e) => self.msg_box.append(e),
-            };
+            *self.fl_save_contents.borrow_mut() = fl_save;
 
-            self.msg_box.append("[INFO]: Backing up your Freelancer save.\r\n");
-
+            self.convert_btn.set_enabled(true);
+            self.fix_btn.set_enabled(true);
         } else {
+            self.convert_btn.set_enabled(false);
+            self.fix_btn.set_enabled(false);
+
             self.msg_box.append("[ERROR]: Save file may be empty or corrupt.\r\n");
         };
+    }
+
+    fn convert_save(&self) {
+        let fl_path: *mut PathBuf = self.orig_path.as_ptr();
+        let fl_save: *mut BString = self.fl_save_contents.as_ptr();
+        self.msg_box.append("[INFO]: Backing up your Freelancer save.\r\n");
+        
+        unsafe {
+            match backup_save(fl_path.as_ref().unwrap().as_path()) {
+                Ok(o) => {
+                    self.msg_box.append(o);               
+                    println!("{:?}", decrypt(fl_save.as_ref().unwrap()));
+                },
+                Err(e) => self.msg_box.append(e),
+            }
+        }
+    }
+
+    fn fix_save(&self) {
+        unsafe {
+            let fl_path = self.orig_path.as_ptr();
+            self.msg_box.append("[INFO]: Backing up your Freelancer save.\r\n");
+            match backup_save(fl_path.as_ref().unwrap().as_path()) {
+                Ok(o) => {
+                    self.msg_box.append(o);               
+                    //println!("{:?}", decrypt(&fl_save));
+                },
+                Err(e) => self.msg_box.append(e),
+            }
+        }
     }
 
     fn open_about(&self) {
