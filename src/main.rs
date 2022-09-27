@@ -9,6 +9,7 @@ use bstr::BString;
 use nwd::NwgUi;
 use nwg::NativeUi;
 use std::cell::RefCell;
+use std::ffi::OsStr;
 use std::path::{PathBuf, Path};
 
 use std::thread;
@@ -161,31 +162,38 @@ impl FLSaveConvert {
                     let fl_path: *mut PathBuf = self.orig_path.as_ptr();
 
                     unsafe {
-                        let fl_name: &str = fl_name_ptr.as_ref()
+                        /*let fl_name: &str = fl_name_ptr.as_ref()
                             .expect("Save path should not be null.")
                             .file_name().expect("Save name should not be empty.")
-                            .to_str().expect("Unable to convert save name to str.");
+                            .to_str().expect("Unable to convert save name to str.");*/
 
                         let fl_path_str: &str = fl_path.as_ref()
                             .expect("Save path should not be null.")
-                            .to_str().expect("Cannot convert ptr to str.");                
+                            .to_str().expect("Cannot convert file path ptr to str.");                
 
                         // Set file name text input to FL save path.
                         self.file_name.set_text(fl_path_str);
                             
-                        self.process_file(fl_path_str, fl_name);
+                        self.process_file(fl_path_str);
                     }
                 }
             }
         }
     }
 
-    fn process_file(&self, file_path: &str, file_name: &str) {
+    fn process_file(&self, file_path: &str) {//, file_name: &str) {
         self.msg_box.set_text("[INFO]: Reading Freelancer save.\r\n");
 
         if let Ok(fl_save) = read_save(file_path) {
             self.msg_box.append("[INFO]: ");
-            self.msg_box.append(file_name);
+            unsafe {
+                let fl_name_ptr = self.orig_path.as_ptr();
+                let file_name = fl_name_ptr.as_ref()
+                    .expect("File name should not be null.")
+                    .file_name().expect("Could not get file name.")
+                    .to_str().expect("Cannot convert file name ptr to str.");
+                self.msg_box.append(file_name);
+            }
             self.msg_box.append(" successfully read.\r\n");
 
             *self.fl_save_contents.borrow_mut() = fl_save;
@@ -203,13 +211,34 @@ impl FLSaveConvert {
     fn convert_save(&self) {
         let fl_path: *mut PathBuf = self.orig_path.as_ptr();
         let fl_save: *mut BString = self.fl_save_contents.as_ptr();
+
+        //let fl_save_name = fl_path.file_name();
+        
         self.msg_box.append("[INFO]: Backing up your Freelancer save.\r\n");
         
         unsafe {
             match backup_save(fl_path.as_ref().unwrap().as_path()) {
                 Ok(o) => {
-                    self.msg_box.append(o);               
-                    println!("{:?}", decrypt(fl_save.as_ref().unwrap()));
+                    self.msg_box.append(o);
+                    //let my_buf = decrypt(fl_save.as_ref().unwrap());
+                    if let Ok(my_buf) = decrypt(fl_save.as_ref().unwrap()) {
+                        let orig_dir = self.orig_path.as_ptr();
+                        let save_dir: &Path = orig_dir.as_ref().unwrap().parent().unwrap();
+
+                        let fl_name_ptr = self.orig_path.as_ptr();
+                        let save_name = fl_name_ptr.as_ref()
+                            .expect("File name should not be null.").file_name();
+
+                        if let Ok(..) = write_out(save_dir.to_path_buf(), save_name, my_buf) {
+                            self.msg_box.append("[INFO]: New save successfully written.")
+                        } else {
+                            self.msg_box.append("[ERROR]: Failed to write new save file.")
+                        };
+                    } else {
+                        self.msg_box.append("[ERROR]: Failed to decipher save.");
+                    };
+                    //write_out(save_dir, save_name, buf);
+                    //decrypt(fl_save.as_ref().unwrap());
                 },
                 Err(e) => self.msg_box.append(e),
             }
