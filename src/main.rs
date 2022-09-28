@@ -1,19 +1,19 @@
-mod fl_io;
 mod fl_core;
+mod fl_io;
 
 extern crate native_windows_derive as nwd;
-use crate::fl_io::*;
 use crate::fl_core::*;
+use crate::fl_io::*;
 
 use bstr::BString;
 use nwd::NwgUi;
 use nwg::NativeUi;
 use std::cell::RefCell;
 use std::ffi::OsStr;
-use std::path::{PathBuf, Path};
+use std::path::{Path, PathBuf};
 
-use std::thread;
 use directories::UserDirs;
+use std::thread;
 
 #[derive(Default, NwgUi)]
 pub struct AboutWindow {
@@ -23,6 +23,7 @@ pub struct AboutWindow {
         size: (300, 100),
         center: true,
         title: "About")]
+        
     #[nwg_events(OnWindowClose: [AboutWindow::close])]
     about_window: nwg::Window,
 
@@ -30,7 +31,7 @@ pub struct AboutWindow {
     font: nwg::Font,
 
     #[nwg_control(
-        parent: about_window, 
+        parent: about_window,
         flags: "VISIBLE|MULTI_LINE",
         text: "Freelancer Save Convert v0.1.0\r\ngithub.com/BC46/freelancer-hd-edition\r\ngithub.com/BC46/freelancer-hd-edition", 
         size: (300, 100),
@@ -146,33 +147,39 @@ impl FLSaveConvert {
             if let Some(dir) = sp_path.to_str() {
                 self.dialog.clear_client_data();
                 let nwg_default_dir = self.dialog.set_default_folder(dir);
-                
+
                 // If FL save dir exists ok, otherwise set to Documents root.
-                if let Ok(..) = nwg_default_dir{
+                if let Ok(..) = nwg_default_dir {
                     nwg_default_dir.expect("Failed to set default folder.");
                 } else {
-                    self.dialog.set_default_folder(user_docs.to_str().unwrap()).expect("Failed to set default folder.");
+                    self.dialog
+                        .set_default_folder(user_docs.to_str().unwrap())
+                        .expect("Failed to set default folder.");
                 }
             }
-        
+
             if self.dialog.run(Some(&self.window)) {
                 // Set file name text input to blank.
                 self.file_name.set_text("");
                 if let Ok(directory) = self.dialog.get_selected_item() {
-                    let dir_path: PathBuf = directory.try_into().expect("Failed to convert directory to PathBuf.");
-                    
+                    let dir_path: PathBuf = directory
+                        .try_into()
+                        .expect("Failed to convert directory to PathBuf.");
+
                     *self.orig_path.borrow_mut() = dir_path;
 
                     let fl_path: *mut PathBuf = self.orig_path.as_ptr();
 
                     unsafe {
-                        let fl_path_str: &str = fl_path.as_ref()
+                        let fl_path_str: &str = fl_path
+                            .as_ref()
                             .expect("Save path should not be null.")
-                            .to_str().expect("Cannot convert file path ptr to str.");                
+                            .to_str()
+                            .expect("Cannot convert file path ptr to str.");
 
                         // Set file name text input to FL save path.
                         self.file_name.set_text(fl_path_str);
-                            
+
                         self.process_file(fl_path_str);
                     }
                 }
@@ -181,16 +188,20 @@ impl FLSaveConvert {
     } // End of open_file.
 
     fn process_file(&self, file_path: &str) {
-        self.msg_box.set_text("[INFO]: Reading Freelancer save.\r\n");
+        self.msg_box
+            .set_text("[INFO]: Reading Freelancer save.\r\n");
 
         if let Ok(fl_save) = read_save(file_path) {
             self.msg_box.append("[INFO]: ");
             unsafe {
                 let fl_name_ptr = self.orig_path.as_ptr();
-                let file_name = fl_name_ptr.as_ref()
+                let file_name = fl_name_ptr
+                    .as_ref()
                     .expect("File name should not be null.")
-                    .file_name().expect("Could not get file name.")
-                    .to_str().expect("Cannot convert file name ptr to str.");
+                    .file_name()
+                    .expect("Could not get file name.")
+                    .to_str()
+                    .expect("Cannot convert file name ptr to str.");
                 self.msg_box.append(file_name);
             }
             self.msg_box.append(" successfully read.\r\n");
@@ -203,22 +214,26 @@ impl FLSaveConvert {
             self.convert_btn.set_enabled(false);
             self.fix_btn.set_enabled(false);
 
-            self.msg_box.append("[ERROR]: Save file may be empty or corrupt.\r\n");
+            self.msg_box
+                .append("[ERROR]: Save file may be empty or corrupt.\r\n");
         };
     } // End of process_file.
 
     fn convert_save(&self) {
         let orig_path_ptr: *mut PathBuf = self.orig_path.as_ptr();
         let save_contents_ptr: *mut BString = self.fl_save_contents.as_ptr();
-        
-        self.msg_box.append("[INFO]: Backing up your Freelancer save.\r\n");
-        
-        unsafe {
-            let fl_path: &Path = orig_path_ptr.as_ref()
-            .expect("Original path should not be null.")
-            .as_path();
 
-            let fl_save: &BString = save_contents_ptr.as_ref()
+        self.msg_box
+            .append("[INFO]: Backing up your Freelancer save.\r\n");
+
+        unsafe {
+            let fl_path: &Path = orig_path_ptr
+                .as_ref()
+                .expect("Original path should not be null.")
+                .as_path();
+
+            let fl_save: &BString = save_contents_ptr
+                .as_ref()
                 .expect("Save file contents should not be null.");
 
             match backup_save(fl_path) {
@@ -228,19 +243,23 @@ impl FLSaveConvert {
                         let save_dir: &Path = orig_path_ptr.as_ref().unwrap().parent().unwrap();
 
                         let fl_name_ptr: *mut PathBuf = self.orig_path.as_ptr();
-                        let save_name: Option<&OsStr> = fl_name_ptr.as_ref()
-                            .expect("File name should not be null.").file_name();
+                        let save_name: Option<&OsStr> = fl_name_ptr
+                            .as_ref()
+                            .expect("File name should not be null.")
+                            .file_name();
 
                         if let Ok(..) = write_out(save_dir.to_path_buf(), save_name, my_buf) {
-                            self.msg_box.append("[INFO]: New save successfully written.\r\n");
+                            self.msg_box
+                                .append("[INFO]: New save successfully written.\r\n");
                             self.convert_btn.set_enabled(false);
                         } else {
-                            self.msg_box.append("[ERROR]: Failed to write new save file.\r\n");
+                            self.msg_box
+                                .append("[ERROR]: Failed to write new save file.\r\n");
                         };
                     } else {
                         self.msg_box.append("[ERROR]: Failed to decipher save.\r\n");
                     };
-                },
+                }
                 Err(e) => self.msg_box.append(e),
             }
         }
@@ -249,15 +268,18 @@ impl FLSaveConvert {
     fn fix_save(&self) {
         let orig_path_ptr: *mut PathBuf = self.orig_path.as_ptr();
         let save_contents_ptr: *mut BString = self.fl_save_contents.as_ptr();
-        
-        self.msg_box.append("[INFO]: Backing up your Freelancer save.\r\n");
-        
-        unsafe {
-            let fl_path: &Path = orig_path_ptr.as_ref()
-            .expect("Original path should not be null.")
-            .as_path();
 
-            let fl_save: &BString = save_contents_ptr.as_ref()
+        self.msg_box
+            .append("[INFO]: Backing up your Freelancer save.\r\n");
+
+        unsafe {
+            let fl_path: &Path = orig_path_ptr
+                .as_ref()
+                .expect("Original path should not be null.")
+                .as_path();
+
+            let fl_save: &BString = save_contents_ptr
+                .as_ref()
                 .expect("Save file contents should not be null.");
 
             match backup_save(fl_path) {
@@ -268,16 +290,22 @@ impl FLSaveConvert {
                         let save_dir: &Path = orig_path_ptr.as_ref().unwrap().parent().unwrap();
 
                         let fl_name_ptr: *mut PathBuf = self.orig_path.as_ptr();
-                        let save_name: Option<&OsStr> = fl_name_ptr.as_ref()
-                            .expect("File name should not be null.").file_name();
+                        let save_name: Option<&OsStr> = fl_name_ptr
+                            .as_ref()
+                            .expect("File name should not be null.")
+                            .file_name();
 
                         if let Ok(modified_buf) = fix_save(my_buf) {
-                            if let Ok(..) = write_out(save_dir.to_path_buf(), save_name, modified_buf) {
-                                self.msg_box.append("[INFO]: New save successfully written.\r\n");
+                            if let Ok(..) =
+                                write_out(save_dir.to_path_buf(), save_name, modified_buf)
+                            {
+                                self.msg_box
+                                    .append("[INFO]: New save successfully written.\r\n");
                                 self.convert_btn.set_enabled(false);
                                 self.fix_btn.set_enabled(false);
                             } else {
-                                self.msg_box.append("[ERROR]: Failed to write new save file.\r\n");
+                                self.msg_box
+                                    .append("[ERROR]: Failed to write new save file.\r\n");
                             };
                         } else {
                             self.msg_box.append("[ERROR]: Failed to modify save.\r\n");
@@ -285,7 +313,7 @@ impl FLSaveConvert {
                     } else {
                         self.msg_box.append("[ERROR]: Failed to decipher save.\r\n");
                     };
-                },
+                }
                 Err(e) => self.msg_box.append(e),
             }
         }

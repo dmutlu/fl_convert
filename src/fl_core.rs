@@ -1,13 +1,17 @@
-use std::{io::{self, ErrorKind}, convert::TryInto, str::FromStr};
 use bstr::{BString, ByteSlice};
-use regex::{Regex};
+use regex::Regex;
+use std::{
+    convert::TryInto,
+    io::{self, ErrorKind},
+    str::FromStr,
+};
 
 pub fn decrypt(buffer: &BString) -> io::Result<String> {
     // Cipher algorithm provided by
     // https://the-starport.net/modules/mediawiki/index.php/MDB:%2Afl
 
     // First 4 bytes of the file "FLS1" to skip.
-    let mut len: usize =  4;
+    let mut len: usize = 4;
     let mut my_iter: usize = 0;
 
     // "Gene, Gene, The Cinnabon Machine."
@@ -21,19 +25,19 @@ pub fn decrypt(buffer: &BString) -> io::Result<String> {
     if my_buf.contains_str("FLS1") {
         while len < byte_buf_len {
             let gene_cipher: u8 = ((gene[my_iter % 4] + my_iter) % 256).try_into().unwrap();
-            
+
             decipher_buf.push(my_buf.get(len).unwrap() ^ (gene_cipher | 0x80));
-        
+
             len += 1;
             my_iter += 1;
         }
-    
+
         let decipher_save = std::str::from_utf8(&decipher_buf);
 
         // Return the deciphered save data.
         Ok(decipher_save.unwrap().to_string())
-
-    } else { // Not encrypted, return original buffer data.
+    } else {
+        // Not encrypted, return original buffer data.
         Ok(my_buf.to_string())
     }
 } // End of decrypt.
@@ -43,7 +47,7 @@ pub fn fix_save(buf: String) -> Result<String, ErrorKind> {
     let re: Regex = Regex::new(r"MissionNum.*(.+)").unwrap();
     // Capture the 'MissionNum' line from the save.
     let result = re.captures(&buf);
-    
+
     if let Some(..) = result {
         let mission_cap = result.unwrap();
         // Save the entire line as a str.
@@ -55,11 +59,12 @@ pub fn fix_save(buf: String) -> Result<String, ErrorKind> {
         // Increment the value by 1 to allow player to advance to the next mission.
         let mission_inc: i32 = mission_num + 1;
         // Replace the mission value in the original str with our new incremented value.
-        let new_mission: String = mission_orig_str.replace(mission_num_str, mission_inc.to_string().as_str());
+        let new_mission: String =
+            mission_orig_str.replace(mission_num_str, mission_inc.to_string().as_str());
 
         let delta: &str = "delta_worth = -1.000000";
         let new_delta: &str = "delta_worth = 1.000000";
-        
+
         let my_buf: String = buf.replace(mission_orig_str, new_mission.as_str());
         let my_buf: String = my_buf.replace(delta, new_delta);
 
