@@ -7,8 +7,6 @@ rust-version = "1.63"
 description = "A Win32 program to convert or convert + fix saves for the game Freelancer (2003)."
 keywords = ["Freelancer", "HDE", "save"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 bstr = "1.0.0"
 regex = "1.6.0"
