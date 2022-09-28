@@ -62,6 +62,7 @@ pub fn fix_save(buf: String) -> Result<String, ErrorKind> {
 
         Ok(my_buf)
     } else {
+        // 'MissionNum' is not found, throw error.
         Err(ErrorKind::NotFound)
     }
 } // End of fix_save.
