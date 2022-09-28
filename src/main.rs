@@ -1,8 +1,8 @@
-mod file_handling;
+mod fl_io;
 mod fl_core;
 
 extern crate native_windows_derive as nwd;
-use crate::file_handling::*;
+use crate::fl_io::*;
 use crate::fl_core::*;
 
 use bstr::BString;
@@ -163,15 +163,9 @@ impl FLSaveConvert {
                     
                     *self.orig_path.borrow_mut() = dir_path;
 
-                    //let fl_name_ptr: *mut PathBuf = self.orig_path.as_ptr();
                     let fl_path: *mut PathBuf = self.orig_path.as_ptr();
 
                     unsafe {
-                        /*let fl_name: &str = fl_name_ptr.as_ref()
-                            .expect("Save path should not be null.")
-                            .file_name().expect("Save name should not be empty.")
-                            .to_str().expect("Unable to convert save name to str.");*/
-
                         let fl_path_str: &str = fl_path.as_ref()
                             .expect("Save path should not be null.")
                             .to_str().expect("Cannot convert file path ptr to str.");                
@@ -186,7 +180,7 @@ impl FLSaveConvert {
         }
     }
 
-    fn process_file(&self, file_path: &str) {//, file_name: &str) {
+    fn process_file(&self, file_path: &str) {
         self.msg_box.set_text("[INFO]: Reading Freelancer save.\r\n");
 
         if let Ok(fl_save) = read_save(file_path) {
@@ -216,8 +210,6 @@ impl FLSaveConvert {
     fn convert_save(&self) {
         let orig_path_ptr: *mut PathBuf = self.orig_path.as_ptr();
         let save_contents_ptr: *mut BString = self.fl_save_contents.as_ptr();
-
-        //let fl_save_name = fl_path.file_name();
         
         self.msg_box.append("[INFO]: Backing up your Freelancer save.\r\n");
         
@@ -232,9 +224,7 @@ impl FLSaveConvert {
             match backup_save(fl_path) {
                 Ok(o) => {
                     self.msg_box.append(o);
-                    //let my_buf = decrypt(fl_save.as_ref().unwrap());
                     if let Ok(my_buf) = decrypt(fl_save) {
-                        //let orig_dir: *mut PathBuf = self.orig_path.as_ptr();
                         let save_dir: &Path = orig_path_ptr.as_ref().unwrap().parent().unwrap();
 
                         let fl_name_ptr: *mut PathBuf = self.orig_path.as_ptr();

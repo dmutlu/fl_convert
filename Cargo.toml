@@ -1,7 +1,11 @@
 [package]
 name = "flhde_flconvert"
 version = "0.1.0"
+authors = ["dmutlu"]
 edition = "2021"
+rust-version = "1.63"
+description = "A Win32 program to convert or convert + fix saves for the game Freelancer (2003)."
+keywords = ["Freelancer", "HDE", "save"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
