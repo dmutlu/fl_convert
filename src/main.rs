@@ -276,11 +276,16 @@ impl FLSaveConvert {
                         let save_name: Option<&OsStr> = fl_name_ptr.as_ref()
                             .expect("File name should not be null.").file_name();
 
-                        if let Ok(..) = write_out(save_dir.to_path_buf(), save_name, my_buf) {
-                            self.msg_box.append("[INFO]: New save successfully written.");
-                            self.fix_btn.set_enabled(false);
+                        if let Ok(modified_buf) = fix_save(my_buf) {
+                            if let Ok(..) = write_out(save_dir.to_path_buf(), save_name, modified_buf) {
+                                self.msg_box.append("[INFO]: New save successfully written.");
+                                self.convert_btn.set_enabled(false);
+                                self.fix_btn.set_enabled(false);
+                            } else {
+                                self.msg_box.append("[ERROR]: Failed to write new save file.");
+                            };
                         } else {
-                            self.msg_box.append("[ERROR]: Failed to write new save file.");
+                            self.msg_box.append("[ERROR]: Failed to modify save.");
                         };
                     } else {
                         self.msg_box.append("[ERROR]: Failed to decipher save.");

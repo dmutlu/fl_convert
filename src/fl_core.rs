@@ -1,6 +1,6 @@
-use std::{io::{self}, convert::TryInto, str::FromStr};
+use std::{io::{self, ErrorKind}, convert::TryInto, str::FromStr};
 use bstr::{BString, ByteSlice};
-use regex::{Regex, Captures};
+use regex::{Regex};
 
 pub fn decrypt(buffer: &BString) -> io::Result<String> {
     // First 4 bytes of the file "FLS1" to skip.
@@ -35,27 +35,33 @@ pub fn decrypt(buffer: &BString) -> io::Result<String> {
     }
 } // End of decrypt.
 
-pub fn fix_save(buf: String) -> String {
+pub fn fix_save(buf: String) -> Result<String, ErrorKind> {
     // Match 'MissionNum' line, group assigned value.
     let re: Regex = Regex::new(r"MissionNum.*(.+)").unwrap();
     // Capture the 'MissionNum' line from the save.
-    let mission_cap: Captures = re.captures(&buf).expect("The 'MissionNum' parameter was not found.");
-    // Save the entire line as a str.
-    let mission_orig_str: &str = mission_cap.get(0).unwrap().as_str();
-    // Save just the current value as a str.
-    let mission_num_str: &str = mission_cap.get(1).unwrap().as_str();
-    // Convert the value from str to i32.
-    let mission_num: i32 = FromStr::from_str(mission_num_str).unwrap();
-    // Increment the value by 1 to allow player to advance to the next mission.
-    let mission_inc: i32 = mission_num + 1;
-    // Replace the mission value in the original str with our new incremented value.
-    let new_mission: String = mission_orig_str.replace(mission_num_str, mission_inc.to_string().as_str());
+    let result = re.captures(&buf);
     
-    let delta: &str = "delta_worth = -1.000000";
-    let new_delta: &str = "delta_worth = 1.000000";
-    
-    let my_buf: String = buf.replace(mission_orig_str, new_mission.as_str());
-    let my_buf: String = my_buf.replace(delta, new_delta);
+    if let Some(..) = result {
+        let mission_cap = result.unwrap();
+        // Save the entire line as a str.
+        let mission_orig_str: &str = mission_cap.get(0).unwrap().as_str();
+        // Save just the current value as a str.
+        let mission_num_str: &str = mission_cap.get(1).unwrap().as_str();
+        // Convert the value from str to i32.
+        let mission_num: i32 = FromStr::from_str(mission_num_str).unwrap();
+        // Increment the value by 1 to allow player to advance to the next mission.
+        let mission_inc: i32 = mission_num + 1;
+        // Replace the mission value in the original str with our new incremented value.
+        let new_mission: String = mission_orig_str.replace(mission_num_str, mission_inc.to_string().as_str());
 
-    my_buf
+        let delta: &str = "delta_worth = -1.000000";
+        let new_delta: &str = "delta_worth = 1.000000";
+        
+        let my_buf: String = buf.replace(mission_orig_str, new_mission.as_str());
+        let my_buf: String = my_buf.replace(delta, new_delta);
+
+        Ok(my_buf)
+    } else {
+        Err(ErrorKind::NotFound)
+    }
 } // End of fix_save.
