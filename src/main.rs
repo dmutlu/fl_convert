@@ -178,7 +178,7 @@ impl FLSaveConvert {
                 }
             }
         }
-    }
+    } // End of open_file.
 
     fn process_file(&self, file_path: &str) {
         self.msg_box.set_text("[INFO]: Reading Freelancer save.\r\n");
@@ -205,7 +205,7 @@ impl FLSaveConvert {
 
             self.msg_box.append("[ERROR]: Save file may be empty or corrupt.\r\n");
         };
-    }
+    } // End of process_file.
 
     fn convert_save(&self) {
         let orig_path_ptr: *mut PathBuf = self.orig_path.as_ptr();
@@ -244,7 +244,7 @@ impl FLSaveConvert {
                 Err(e) => self.msg_box.append(e),
             }
         }
-    }
+    } // End of convert_save.
 
     fn fix_save(&self) {
         let orig_path_ptr: *mut PathBuf = self.orig_path.as_ptr();
@@ -289,7 +289,7 @@ impl FLSaveConvert {
                 Err(e) => self.msg_box.append(e),
             }
         }
-    }
+    } // End of fix_save.
 
     fn open_about(&self) {
         // Disable the button to stop the user from spawning multiple dialogs
