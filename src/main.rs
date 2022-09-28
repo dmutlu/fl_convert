@@ -63,9 +63,14 @@ pub struct FLSaveConvert {
         // length, height
         size: (500, 400),
         center: true,
-        title: "FL Save Convert")]
-    #[nwg_events( OnWindowClose: [FLSaveConvert::exit])]
+        title: "FL Save Convert",
+        icon: Some(&data.flc_icon))]
+
+    #[nwg_events(OnWindowClose: [FLSaveConvert::exit])]
     window: nwg::Window,
+
+    #[nwg_resource(source_file: Some("../../src/res/flc_icon.ico"))]
+    flc_icon: nwg::Icon,
 
     #[nwg_layout(parent: window, max_row: Some(5), max_column: Some(5))]
     main_layout: nwg::GridLayout,

@@ -3,6 +3,9 @@ use bstr::{BString, ByteSlice};
 use regex::{Regex};
 
 pub fn decrypt(buffer: &BString) -> io::Result<String> {
+    // Cipher algorithm provided by
+    // https://the-starport.net/modules/mediawiki/index.php/MDB:%2Afl
+
     // First 4 bytes of the file "FLS1" to skip.
     let mut len: usize =  4;
     let mut my_iter: usize = 0;
