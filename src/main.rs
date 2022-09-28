@@ -158,7 +158,7 @@ impl FLSaveConvert {
                     
                     *self.orig_path.borrow_mut() = dir_path;
 
-                    let fl_name_ptr: *mut PathBuf = self.orig_path.as_ptr();
+                    //let fl_name_ptr: *mut PathBuf = self.orig_path.as_ptr();
                     let fl_path: *mut PathBuf = self.orig_path.as_ptr();
 
                     unsafe {
@@ -209,36 +209,42 @@ impl FLSaveConvert {
     }
 
     fn convert_save(&self) {
-        let fl_path: *mut PathBuf = self.orig_path.as_ptr();
-        let fl_save: *mut BString = self.fl_save_contents.as_ptr();
+        let orig_path_ptr: *mut PathBuf = self.orig_path.as_ptr();
+        let save_contents_ptr: *mut BString = self.fl_save_contents.as_ptr();
 
         //let fl_save_name = fl_path.file_name();
         
         self.msg_box.append("[INFO]: Backing up your Freelancer save.\r\n");
         
         unsafe {
-            match backup_save(fl_path.as_ref().unwrap().as_path()) {
+            let fl_path: &Path = orig_path_ptr.as_ref()
+            .expect("Original path should not be null.")
+            .as_path();
+
+            let fl_save: &BString = save_contents_ptr.as_ref()
+                .expect("Save file contents should not be null.");
+
+            match backup_save(fl_path) {
                 Ok(o) => {
                     self.msg_box.append(o);
                     //let my_buf = decrypt(fl_save.as_ref().unwrap());
-                    if let Ok(my_buf) = decrypt(fl_save.as_ref().unwrap()) {
-                        let orig_dir = self.orig_path.as_ptr();
-                        let save_dir: &Path = orig_dir.as_ref().unwrap().parent().unwrap();
+                    if let Ok(my_buf) = decrypt(fl_save) {
+                        //let orig_dir: *mut PathBuf = self.orig_path.as_ptr();
+                        let save_dir: &Path = orig_path_ptr.as_ref().unwrap().parent().unwrap();
 
-                        let fl_name_ptr = self.orig_path.as_ptr();
-                        let save_name = fl_name_ptr.as_ref()
+                        let fl_name_ptr: *mut PathBuf = self.orig_path.as_ptr();
+                        let save_name: Option<&OsStr> = fl_name_ptr.as_ref()
                             .expect("File name should not be null.").file_name();
 
                         if let Ok(..) = write_out(save_dir.to_path_buf(), save_name, my_buf) {
-                            self.msg_box.append("[INFO]: New save successfully written.")
+                            self.msg_box.append("[INFO]: New save successfully written.");
+                            self.convert_btn.set_enabled(false);
                         } else {
-                            self.msg_box.append("[ERROR]: Failed to write new save file.")
+                            self.msg_box.append("[ERROR]: Failed to write new save file.");
                         };
                     } else {
                         self.msg_box.append("[ERROR]: Failed to decipher save.");
                     };
-                    //write_out(save_dir, save_name, buf);
-                    //decrypt(fl_save.as_ref().unwrap());
                 },
                 Err(e) => self.msg_box.append(e),
             }
@@ -246,13 +252,39 @@ impl FLSaveConvert {
     }
 
     fn fix_save(&self) {
+        let orig_path_ptr: *mut PathBuf = self.orig_path.as_ptr();
+        let save_contents_ptr: *mut BString = self.fl_save_contents.as_ptr();
+        
+        self.msg_box.append("[INFO]: Backing up your Freelancer save.\r\n");
+        
         unsafe {
-            let fl_path = self.orig_path.as_ptr();
-            self.msg_box.append("[INFO]: Backing up your Freelancer save.\r\n");
-            match backup_save(fl_path.as_ref().unwrap().as_path()) {
+            let fl_path: &Path = orig_path_ptr.as_ref()
+            .expect("Original path should not be null.")
+            .as_path();
+
+            let fl_save: &BString = save_contents_ptr.as_ref()
+                .expect("Save file contents should not be null.");
+
+            match backup_save(fl_path) {
                 Ok(o) => {
-                    self.msg_box.append(o);               
-                    //println!("{:?}", decrypt(&fl_save));
+                    self.msg_box.append(o);
+
+                    if let Ok(my_buf) = decrypt(fl_save) {
+                        let save_dir: &Path = orig_path_ptr.as_ref().unwrap().parent().unwrap();
+
+                        let fl_name_ptr: *mut PathBuf = self.orig_path.as_ptr();
+                        let save_name: Option<&OsStr> = fl_name_ptr.as_ref()
+                            .expect("File name should not be null.").file_name();
+
+                        if let Ok(..) = write_out(save_dir.to_path_buf(), save_name, my_buf) {
+                            self.msg_box.append("[INFO]: New save successfully written.");
+                            self.fix_btn.set_enabled(false);
+                        } else {
+                            self.msg_box.append("[ERROR]: Failed to write new save file.");
+                        };
+                    } else {
+                        self.msg_box.append("[ERROR]: Failed to decipher save.");
+                    };
                 },
                 Err(e) => self.msg_box.append(e),
             }
