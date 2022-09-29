@@ -7,15 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'flhde_flconvert'",
+            "name": "Debug executable 'fl_convert'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=flhde_flconvert",
-                    "--package=flhde_flconvert"
+                    "--bin=fl_convert",
+                    "--package=fl_convert"
                 ],
                 "filter": {
-                    "name": "flhde_flconvert",
+                    "name": "fl_convert",
                     "kind": "bin"
                 }
             },
@@ -25,16 +25,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'flhde_flconvert'",
+            "name": "Debug unit tests in executable 'fl_convert'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=flhde_flconvert",
-                    "--package=flhde_flconvert"
+                    "--bin=fl_convert",
+                    "--package=fl_convert"
                 ],
                 "filter": {
-                    "name": "flhde_flconvert",
+                    "name": "fl_convert",
                     "kind": "bin"
                 }
             },
