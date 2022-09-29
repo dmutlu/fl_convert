@@ -1,11 +1,12 @@
 [package]
-name = "flhde_flconvert"
+name = "fl_convert"
 version = "0.1.0"
 authors = ["dmutlu"]
 edition = "2021"
 rust-version = "1.63"
 description = "A Win32 program to convert or convert + fix saves for the game Freelancer (2003)."
 keywords = ["Freelancer", "HDE", "save"]
+build = "build.rs"
 
 [dependencies]
 bstr = "1.0.0"
@@ -14,3 +15,11 @@ chrono = "0.4.22"
 nwg = {version = "1.0.13", package = "native-windows-gui", features = ["menu"]}
 native-windows-derive = "1.0.3"
 directories = "4.0"
+
+[build-dependencies]
+winres = "0.1.12"
+
+[package.metadata.winres]
+FileDescription = "Freelancer Save Convert"
+OriginalFilename = "fl_convert.exe"
+ProductName = "FL_Convert"
