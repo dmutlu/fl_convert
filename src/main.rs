@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 mod fl_core;
 mod fl_io;
 
