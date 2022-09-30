@@ -44,3 +44,73 @@ pub fn backup_save(orig_path: &Path) -> Result<&'static str, &'static str> {
         Err("[ERROR]: Unable to create backup of save file.\r\n")
     }
 } // End of backup_save.
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn read_rtn_contents() {
+        let save_file: &str = "./src/res/test/good_save.fl";
+
+        assert_eq!(bstr::BString::from("FLS1"), read_save(save_file).unwrap());
+    }
+
+    #[test]
+    fn read_rtn_error() {
+        let save_file: &str = "./src/res/test/empty_save.fl";
+
+        assert!(read_save(save_file).is_err());
+    }
+    
+    #[test]
+    fn write_ok() {
+        let save_dir: PathBuf = std::path::PathBuf::from("./src/res/test/out/write");
+        let test_path: &Path = Path::new("./src/res/test/out/write");
+        let file_name: &OsStr = OsStr::new("write_test.fl");
+        let save_name: Option<&OsStr> = Some(file_name);
+        let buf: String = "FLS1".to_string();
+
+        fs::create_dir(test_path).expect("Could not make test output dir.");
+
+        assert!(write_out(save_dir, save_name, buf).is_ok());
+
+        fs::remove_dir_all(test_path).expect("Could not remove test output dir.");
+    }
+
+    #[test]
+    fn write_rtn_error() {
+        let save_dir: PathBuf = std::path::PathBuf::from("./src/res/test/out/null/");
+        let file_name: &OsStr = OsStr::new("write_test.fl");
+        let save_name: Option<&OsStr> = Some(file_name);
+        let buf: String = "FLS1".to_string();
+
+        assert!(write_out(save_dir, save_name, buf).is_err());
+    }
+
+    #[test]
+    fn backup_ok() {
+        let save_dir: PathBuf = std::path::PathBuf::from("./src/res/test/out/bkup");
+        let test_path: &Path = Path::new("./src/res/test/out/bkup");
+        let file_name: &OsStr = OsStr::new("bkup_test.fl");
+        let save_name: Option<&OsStr> = Some(file_name);
+        let buf: String = "FLS1".to_string();
+        let orig_path: &Path = Path::new("./src/res/test/out/bkup/bkup_test.fl");
+
+        fs::create_dir(test_path).expect("Could not make test output dir.");
+
+        write_out(save_dir, save_name, buf)
+            .expect("Could not write to test output dir.");
+
+        assert!(backup_save(orig_path).is_ok());
+
+        fs::remove_dir_all(test_path).expect("Could not remove test output dir.");
+    }
+
+    #[test]
+    fn backup_rtn_error() {
+        let orig_path: &Path = Path::new("./src/res/test/out/bkup_fail_test.fl");
+
+        assert!(backup_save(orig_path).is_err());
+    }
+}
