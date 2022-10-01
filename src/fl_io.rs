@@ -62,7 +62,7 @@ mod tests {
 
         assert!(read_save(save_file).is_err());
     }
-    
+
     #[test]
     fn write_ok() {
         let save_dir: PathBuf = std::path::PathBuf::from("./src/res/test/out/write");
@@ -99,8 +99,7 @@ mod tests {
 
         fs::create_dir(test_path).expect("Could not make test output dir.");
 
-        write_out(save_dir, save_name, buf)
-            .expect("Could not write to test output dir.");
+        write_out(save_dir, save_name, buf).expect("Could not write to test output dir.");
 
         assert!(backup_save(orig_path).is_ok());
 

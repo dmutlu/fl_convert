@@ -3,7 +3,7 @@ use regex::Regex;
 use std::{
     convert::TryInto,
     io::{self, ErrorKind},
-    str::FromStr,
+    str::{FromStr, from_utf8, Utf8Error},
 };
 
 pub fn decrypt(buffer: &BString) -> io::Result<String> {
@@ -32,7 +32,7 @@ pub fn decrypt(buffer: &BString) -> io::Result<String> {
             my_iter += 1;
         }
 
-        let decipher_save = std::str::from_utf8(&decipher_buf);
+        let decipher_save: Result<&str, Utf8Error> = from_utf8(&decipher_buf);
 
         // Return the deciphered save data.
         Ok(decipher_save.unwrap().to_string())
@@ -46,7 +46,7 @@ pub fn fix_save(buf: String) -> Result<String, ErrorKind> {
     // Match 'MissionNum' line, group assigned value.
     let re: Regex = Regex::new(r"MissionNum.*(.+)").unwrap();
     // Capture the 'MissionNum' line from the save.
-    let result = re.captures(&buf);
+    let result: Option<regex::Captures> = re.captures(&buf);
 
     if let Some(..) = result {
         let mission_cap = result.unwrap();
@@ -74,3 +74,25 @@ pub fn fix_save(buf: String) -> Result<String, ErrorKind> {
         Err(ErrorKind::NotFound)
     }
 } // End of fix_save.
+
+#[cfg(test)]
+mod tests {
+    use crate::fl_io::read_save;
+    use super::*;
+
+    #[test]
+    fn decrypt_rtn_plain() {
+        let data: &str = "Make sure he lives - he owes me some credits.";
+        let buffer: &BString = &bstr::BString::from(data);
+
+        assert_eq!(String::from(data), decrypt(buffer).unwrap());
+    }
+
+    #[test]
+    fn decrypt_rtn_decipher() {
+        let buffer: &BString = &bstr::BString::from(read_save("./src/res/test/cipher_save.fl").unwrap());
+        let decipher_msg: &str = "Your concern is touching. We'll do everything we can. It may take a while.";
+
+        assert_eq!(String::from(decipher_msg), decrypt(buffer).unwrap());
+    }
+}
