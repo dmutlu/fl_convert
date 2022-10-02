@@ -182,14 +182,14 @@ impl FLSaveConvert {
                         // Set file name text input to FL save path.
                         self.file_name.set_text(fl_path_str);
 
-                        self.process_file(fl_path_str);
+                        self.ingest_file(fl_path_str);
                     }
                 }
             }
         }
     } // End of open_file.
 
-    fn process_file(&self, file_path: &str) {
+    fn ingest_file(&self, file_path: &str) {
         self.msg_box
             .set_text("[INFO]: Reading Freelancer save.\r\n");
 
@@ -219,55 +219,19 @@ impl FLSaveConvert {
             self.msg_box
                 .append("[ERROR]: Save file may be empty or corrupt.\r\n");
         };
-    } // End of process_file.
+    } // End of ingest_file.
 
     fn convert_save(&self) {
-        let orig_path_ptr: *mut PathBuf = self.orig_path.as_ptr();
-        let save_contents_ptr: *mut BString = self.fl_save_contents.as_ptr();
-
-        self.msg_box
-            .append("[INFO]: Backing up your Freelancer save.\r\n");
-
-        unsafe {
-            let fl_path: &Path = orig_path_ptr
-                .as_ref()
-                .expect("Original path should not be null.")
-                .as_path();
-
-            let fl_save: &BString = save_contents_ptr
-                .as_ref()
-                .expect("Save file contents should not be null.");
-
-            match backup_save(fl_path) {
-                Ok(o) => {
-                    self.msg_box.append(o);
-                    if let Ok(my_buf) = decrypt(fl_save) {
-                        let save_dir: &Path = orig_path_ptr.as_ref().unwrap().parent().unwrap();
-
-                        let fl_name_ptr: *mut PathBuf = self.orig_path.as_ptr();
-                        let save_name: Option<&OsStr> = fl_name_ptr
-                            .as_ref()
-                            .expect("File name should not be null.")
-                            .file_name();
-
-                        if let Ok(..) = write_out(save_dir.to_path_buf(), save_name, my_buf) {
-                            self.msg_box
-                                .append("[INFO]: New save successfully written.\r\n");
-                            self.convert_btn.set_enabled(false);
-                        } else {
-                            self.msg_box
-                                .append("[ERROR]: Failed to write new save file.\r\n");
-                        };
-                    } else {
-                        self.msg_box.append("[ERROR]: Failed to decipher save.\r\n");
-                    };
-                }
-                Err(e) => self.msg_box.append(e),
-            }
-        }
+        let fix: bool = false;
+        self.process_save(fix);
     } // End of convert_save.
 
     fn fix_save(&self) {
+        let fix: bool = true;
+        self.process_save(fix);
+    } // End of fix_save.
+
+    fn process_save(&self, fix: bool) {
         let orig_path_ptr: *mut PathBuf = self.orig_path.as_ptr();
         let save_contents_ptr: *mut BString = self.fl_save_contents.as_ptr();
 
@@ -297,21 +261,32 @@ impl FLSaveConvert {
                             .expect("File name should not be null.")
                             .file_name();
 
-                        if let Ok(modified_buf) = fix_save(my_buf) {
-                            if let Ok(..) =
-                                write_out(save_dir.to_path_buf(), save_name, modified_buf)
-                            {
+                        if fix {
+                            if let Ok(modified_buf) = fix_save(my_buf) {
+                                if let Ok(..) =
+                                    write_out(save_dir.to_path_buf(), save_name, modified_buf)
+                                {
+                                    self.msg_box
+                                        .append("[INFO]: New save successfully written.\r\n");
+                                    self.convert_btn.set_enabled(false);
+                                    self.fix_btn.set_enabled(false);
+                                } else {
+                                    self.msg_box
+                                        .append("[ERROR]: Failed to write new save file.\r\n");
+                                };
+                            } else {
+                                self.msg_box.append("[ERROR]: Failed to modify save.\r\n");
+                            };
+                        } else {
+                            if let Ok(..) = write_out(save_dir.to_path_buf(), save_name, my_buf) {
                                 self.msg_box
                                     .append("[INFO]: New save successfully written.\r\n");
                                 self.convert_btn.set_enabled(false);
-                                self.fix_btn.set_enabled(false);
                             } else {
                                 self.msg_box
                                     .append("[ERROR]: Failed to write new save file.\r\n");
                             };
-                        } else {
-                            self.msg_box.append("[ERROR]: Failed to modify save.\r\n");
-                        };
+                        };                        
                     } else {
                         self.msg_box.append("[ERROR]: Failed to decipher save.\r\n");
                     };
@@ -319,7 +294,7 @@ impl FLSaveConvert {
                 Err(e) => self.msg_box.append(e),
             }
         }
-    } // End of fix_save.
+    } // End of process_save.
 
     fn open_about(&self) {
         // Disable the button to stop the user from spawning multiple dialogs
