@@ -24,7 +24,8 @@ pub struct AboutWindow {
         ex_flags: 0x00020000|0x00000008,
         size: (300, 100),
         center: true,
-        title: "About")]
+        title: "About",
+        icon: Some(&data.flc_icon))]
         
     #[nwg_events(OnWindowClose: [AboutWindow::close])]
     about_window: nwg::Window,
@@ -32,12 +33,25 @@ pub struct AboutWindow {
     #[nwg_resource(family: "Segoe UI", size: 15)]
     font: nwg::Font,
 
+    #[nwg_resource(source_file: Some("../../src/res/flc_icon.ico"))]
+    flc_icon: nwg::Icon,
+
+    #[nwg_control(
+        parent: about_window,
+        flags: "VISIBLE",
+        // length, height
+        size: (48, 48),
+        // x, y 
+        position: (6, 24),
+        icon: Some(&data.flc_icon))]
+    about_icon: nwg::ImageFrame,
+
     #[nwg_control(
         parent: about_window,
         flags: "VISIBLE|MULTI_LINE",
         text: "Freelancer Save Convert v0.1.0\r\ngithub.com/BC46/freelancer-hd-edition\r\ngithub.com/BC46/freelancer-hd-edition", 
         size: (300, 100),
-        position: (40, 30),
+        position: (65, 25),
         font: Some(&data.font))]
     about_label: nwg::RichLabel,
 }
