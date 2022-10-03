@@ -1,4 +1,4 @@
-# fl_convert
+# FL Save Convert
 A Win32 GUI program which modifies save files from the game Freelancer (2003).
 
 ### Problem:
