@@ -300,7 +300,7 @@ impl FLSaveConvert {
                                 self.msg_box
                                     .append("[ERROR]: Failed to write new save file.\r\n");
                             };
-                        };                        
+                        };
                     } else {
                         self.msg_box.append("[ERROR]: Failed to decipher save.\r\n");
                     };

@@ -3,7 +3,7 @@ use regex::Regex;
 use std::{
     convert::TryInto,
     io::{self, ErrorKind},
-    str::{FromStr, from_utf8, Utf8Error},
+    str::{from_utf8, FromStr, Utf8Error},
 };
 
 pub fn decrypt(buffer: &BString) -> io::Result<String> {
@@ -77,8 +77,8 @@ pub fn fix_save(buf: String) -> Result<String, ErrorKind> {
 
 #[cfg(test)]
 mod tests {
-    use crate::fl_io::read_save;
     use super::*;
+    use crate::fl_io::read_save;
 
     #[test]
     fn decrypt_rtn_plain() {
@@ -90,8 +90,10 @@ mod tests {
 
     #[test]
     fn decrypt_rtn_decipher() {
-        let buffer: &BString = &bstr::BString::from(read_save("./src/res/test/cipher_save.fl").unwrap());
-        let decipher_msg: &str = "Your concern is touching. We'll do everything we can. It may take a while.";
+        let buffer: &BString =
+            &bstr::BString::from(read_save("./src/res/test/cipher_save.fl").unwrap());
+        let decipher_msg: &str =
+            "Your concern is touching. We'll do everything we can. It may take a while.";
 
         assert_eq!(String::from(decipher_msg), decrypt(buffer).unwrap());
     }
