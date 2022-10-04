@@ -1,6 +1,12 @@
 # FL Save Convert
 A Win32 GUI program which modifies save files from the game Freelancer (2003).
 
+## System Dependencies
+Your system will need the latest [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2015-2017-2019-and-2022) installed or you may see the following error when trying to run fl_convert.exe
+
+"The code execution cannot proceed because VCRUNTIME140.dll was not found. Reinstalling the program may fix this problem."
+
+## General Information
 ### Problem:
 Players attempting to use previous saves generated on Freelancer v1.0 have run into issues progressing in the single player story when trying to run the older save on an updated (v1.1) copy of the game. Reportedly this is due to an internal change of mission numbers between game versions[^1].
 
