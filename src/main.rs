@@ -33,7 +33,7 @@ pub struct AboutWindow {
     #[nwg_resource(family: "Segoe UI", size: 15)]
     font: nwg::Font,
 
-    #[nwg_resource(source_file: Some("../../src/res/flc_icon.ico"))]
+    #[nwg_resource(source_bin: Some(include_bytes!("../src/res/flc_icon.ico")))]
     flc_icon: nwg::Icon,
 
     #[nwg_control(
@@ -86,7 +86,7 @@ pub struct FLSaveConvert {
     #[nwg_events(OnWindowClose: [FLSaveConvert::exit])]
     window: nwg::Window,
 
-    #[nwg_resource(source_file: Some("../../src/res/flc_icon.ico"))]
+    #[nwg_resource(source_bin: Some(include_bytes!("../src/res/flc_icon.ico")))]
     flc_icon: nwg::Icon,
 
     #[nwg_layout(parent: window, max_row: Some(5), max_column: Some(5))]
