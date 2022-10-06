@@ -291,15 +291,13 @@ impl FLSaveConvert {
                             } else {
                                 self.msg_box.append("[ERROR]: Failed to modify save.\r\n");
                             };
+                        } else if let Ok(..) = write_out(save_dir.to_path_buf(), save_name, my_buf) {
+                            self.msg_box
+                            .append("[INFO]: New save successfully written.\r\n");
+                            self.convert_btn.set_enabled(false);
                         } else {
-                            if let Ok(..) = write_out(save_dir.to_path_buf(), save_name, my_buf) {
-                                self.msg_box
-                                    .append("[INFO]: New save successfully written.\r\n");
-                                self.convert_btn.set_enabled(false);
-                            } else {
-                                self.msg_box
-                                    .append("[ERROR]: Failed to write new save file.\r\n");
-                            };
+                            self.msg_box
+                                .append("[ERROR]: Failed to write new save file.\r\n");
                         };
                     } else {
                         self.msg_box.append("[ERROR]: Failed to decipher save.\r\n");
