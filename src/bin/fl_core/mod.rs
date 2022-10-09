@@ -91,7 +91,7 @@ mod tests {
     #[test]
     fn decrypt_rtn_decipher() {
         let buffer: &BString =
-            &bstr::BString::from(read_save("./src/res/test/cipher_save.fl").unwrap());
+            &bstr::BString::from(read_save("./src/test_res/cipher_save.fl").unwrap());
         let decipher_msg: &str =
             "Your concern is touching. We'll do everything we can. It may take a while.";
 

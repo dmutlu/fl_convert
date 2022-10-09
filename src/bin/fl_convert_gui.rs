@@ -33,7 +33,7 @@ pub struct AboutWindow {
     #[nwg_resource(family: "Segoe UI", size: 15)]
     font: nwg::Font,
 
-    #[nwg_resource(source_bin: Some(include_bytes!("../src/res/flc_icon.ico")))]
+    #[nwg_resource(source_bin: Some(include_bytes!("res/flc_icon.ico")))]
     flc_icon: nwg::Icon,
 
     #[nwg_control(
@@ -49,7 +49,7 @@ pub struct AboutWindow {
     #[nwg_control(
         parent: about_window,
         flags: "VISIBLE|MULTI_LINE",
-        text: "Freelancer Save Convert v0.1.0\r\ngithub.com/dmutlu/fl_convert\r\ngithub.com/BC46/freelancer-hd-edition", 
+        text: "Freelancer Save Convert v1.0.0\r\ngithub.com/dmutlu/fl_convert\r\ngithub.com/BC46/freelancer-hd-edition", 
         size: (300, 100),
         position: (65, 25),
         font: Some(&data.font))]
@@ -86,7 +86,7 @@ pub struct FLSaveConvert {
     #[nwg_events(OnWindowClose: [FLSaveConvert::exit])]
     window: nwg::Window,
 
-    #[nwg_resource(source_bin: Some(include_bytes!("../src/res/flc_icon.ico")))]
+    #[nwg_resource(source_bin: Some(include_bytes!("res/flc_icon.ico")))]
     flc_icon: nwg::Icon,
 
     #[nwg_layout(parent: window, max_row: Some(5), max_column: Some(5))]

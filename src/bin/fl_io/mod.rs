@@ -51,22 +51,22 @@ mod tests {
 
     #[test]
     fn read_rtn_contents() {
-        let save_file: &str = "./src/res/test/good_save.fl";
+        let save_file: &str = "./src/test_res/good_save.fl";
 
         assert_eq!(bstr::BString::from("FLS1"), read_save(save_file).unwrap());
     }
 
     #[test]
     fn read_rtn_error() {
-        let save_file: &str = "./src/res/test/empty_save.fl";
+        let save_file: &str = "./src/test_res/empty_save.fl";
 
         assert!(read_save(save_file).is_err());
     }
 
     #[test]
     fn write_ok() {
-        let save_dir: PathBuf = std::path::PathBuf::from("./src/res/test/out/write");
-        let test_path: &Path = Path::new("./src/res/test/out/write");
+        let save_dir: PathBuf = std::path::PathBuf::from("./src/test_res/out/write");
+        let test_path: &Path = Path::new("./src/test_res/out/write");
         let file_name: &OsStr = OsStr::new("write_test.fl");
         let save_name: Option<&OsStr> = Some(file_name);
         let buf: String = "FLS1".to_string();
@@ -80,7 +80,7 @@ mod tests {
 
     #[test]
     fn write_rtn_error() {
-        let save_dir: PathBuf = std::path::PathBuf::from("./src/res/test/out/null/");
+        let save_dir: PathBuf = std::path::PathBuf::from("./src/test_res/out/null/");
         let file_name: &OsStr = OsStr::new("write_test.fl");
         let save_name: Option<&OsStr> = Some(file_name);
         let buf: String = "FLS1".to_string();
@@ -90,12 +90,12 @@ mod tests {
 
     #[test]
     fn backup_ok() {
-        let save_dir: PathBuf = std::path::PathBuf::from("./src/res/test/out/bkup");
-        let test_path: &Path = Path::new("./src/res/test/out/bkup");
+        let save_dir: PathBuf = std::path::PathBuf::from("./src/test_res/out/bkup");
+        let test_path: &Path = Path::new("./src/test_res/out/bkup");
         let file_name: &OsStr = OsStr::new("bkup_test.fl");
         let save_name: Option<&OsStr> = Some(file_name);
         let buf: String = "FLS1".to_string();
-        let orig_path: &Path = Path::new("./src/res/test/out/bkup/bkup_test.fl");
+        let orig_path: &Path = Path::new("./src/test_res/out/bkup/bkup_test.fl");
 
         fs::create_dir(test_path).expect("Could not make test output dir.");
 
@@ -108,7 +108,7 @@ mod tests {
 
     #[test]
     fn backup_rtn_error() {
-        let orig_path: &Path = Path::new("./src/res/test/out/bkup_fail_test.fl");
+        let orig_path: &Path = Path::new("./src/test_res/out/bkup_fail_test.fl");
 
         assert!(backup_save(orig_path).is_err());
     }
