@@ -49,7 +49,7 @@ pub struct AboutWindow {
     #[nwg_control(
         parent: about_window,
         flags: "VISIBLE|MULTI_LINE",
-        text: "Freelancer Save Convert v1.0.0\r\ngithub.com/dmutlu/fl_convert\r\ngithub.com/BC46/freelancer-hd-edition", 
+        text: &("Freelancer Save Convert v".to_owned()  + env!("CARGO_PKG_VERSION") + "\r\ngithub.com/dmutlu/fl_convert\r\ngithub.com/BC46/freelancer-hd-edition"),
         size: (300, 100),
         position: (65, 25),
         font: Some(&data.font))]
