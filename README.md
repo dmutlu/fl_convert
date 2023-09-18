@@ -27,4 +27,4 @@ Both options will perform a backup of the selected save file and then use the GE
 
 ### Footnotes
 [^1]: https://the-starport.net/freelancer/forum/viewtopic.php?post_id=20878#forumpost20878
-[^2]: https://the-starport.net/modules/mediawiki/index.php/MDB:%2Afl
+[^2]: https://wiki.the-starport.net/wiki/file-structures/fl
